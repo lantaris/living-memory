@@ -110,18 +110,19 @@ async function syncSession(context: HookContext, sessionID: string, write: boole
   const messages = extractMessages(response.data)
   if (context.debug) logLine(`sync: ${sessionID} write=${write} messages=${messages.length}`)
   const sessionRef = { sessionId: sessionID, sessionLabel: tracker.label(sessionID) }
-  for (const message of messages) {
-    if (tracker.isSeen(sessionID, message.id)) continue
-    if (write) {
-      const result = await bridge.append(message.role, message.text, sessionRef)
-      if (!result.ok) {
-        logLine(`append failed: ${result.error}`)
-        return
-      }
-      if (context.debug) logLine(`appended ${message.role} ${message.id} recent=${result.data.recent}`)
+  const unseen = messages.filter((message) => !tracker.isSeen(sessionID, message.id))
+  if (write && unseen.length > 0) {
+    const result = await bridge.appendBatch(
+      unseen.map((message) => ({ role: message.role, content: message.text })),
+      sessionRef,
+    )
+    if (!result.ok) {
+      logLine(`append batch failed: ${result.error}`)
+      return
     }
-    tracker.markSeen(sessionID, message.id)
+    if (context.debug) logLine(`appended batch=${result.data.appended} recent=${result.data.recent}`)
   }
+  for (const message of unseen) tracker.markSeen(sessionID, message.id)
 }
 
 async function ensureSessionTracked(

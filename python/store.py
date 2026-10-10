@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import fcntl
 import json
 import os
 import re
@@ -42,7 +41,6 @@ class MemoryStore:
         self.recent_dir = self.memory_dir / "recent"
         self.loss_log_path = self.memory_dir / "loss_log.jsonl"
         self.pending_path = self.memory_dir / "pending.jsonl"
-        self.lock_path = self.memory_dir / ".lock"
         self.db_path = self.memory_dir / "index.db"
         self.recent_limit = recent_limit
         self.recent_dir.mkdir(parents=True, exist_ok=True)
@@ -60,47 +58,111 @@ class MemoryStore:
             self.loss_log_path.write_text("", encoding="utf-8")
         if not self.pending_path.exists():
             self.pending_path.write_text("", encoding="utf-8")
-        if not self.lock_path.exists():
-            self.lock_path.write_text("", encoding="utf-8")
 
     def _connect(self) -> sqlite3.Connection:
         con = sqlite3.connect(self.db_path, timeout=10)
-        con.execute("PRAGMA journal_mode=WAL")
         con.execute("PRAGMA busy_timeout=10000")
         return con
 
+    def _ensure_wal(self, con: sqlite3.Connection) -> None:
+        """Switch the database to WAL once, tolerating concurrent first-time writers.
+
+        ``PRAGMA journal_mode=WAL`` needs a quiet moment and does NOT honour the
+        busy handler, so two processes initializing the same fresh data dir can get
+        "database is locked" here; retry briefly instead of failing the call.
+        """
+        mode = str(con.execute("PRAGMA journal_mode").fetchone()[0]).lower()
+        if mode == "wal":
+            return
+        deadline = time.monotonic() + 10.0
+        while True:
+            try:
+                con.execute("PRAGMA journal_mode=WAL")
+                return
+            except sqlite3.OperationalError:
+                if time.monotonic() >= deadline:
+                    raise
+                time.sleep(0.05)
+
     def _init_db(self):
-        with self._connect() as con:
-            con.execute(
-                "CREATE TABLE IF NOT EXISTS history ("
-                "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                "role TEXT NOT NULL,"
-                "content TEXT NOT NULL,"
-                "ts REAL NOT NULL,"
-                "private INTEGER NOT NULL DEFAULT 0,"
-                "session_id TEXT,"
-                "session_label TEXT)"
-            )
+        con = self._connect()
+        try:
+            self._ensure_wal(con)
+            has_history = con.execute(
+                "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'history'"
+            ).fetchone()
+            if not has_history:
+                con.execute(
+                    "CREATE TABLE IF NOT EXISTS history ("
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    "role TEXT NOT NULL,"
+                    "content TEXT NOT NULL,"
+                    "ts REAL NOT NULL,"
+                    "private INTEGER NOT NULL DEFAULT 0,"
+                    "session_id TEXT,"
+                    "session_label TEXT)"
+                )
             columns = {row[1] for row in con.execute("PRAGMA table_info(history)")}
             if "session_id" not in columns:
                 con.execute("ALTER TABLE history ADD COLUMN session_id TEXT")
             if "session_label" not in columns:
                 con.execute("ALTER TABLE history ADD COLUMN session_label TEXT")
-            con.execute("CREATE INDEX IF NOT EXISTS idx_history_ts ON history(ts)")
+            has_index = con.execute(
+                "SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = 'idx_history_ts'"
+            ).fetchone()
+            if not has_index:
+                con.execute("CREATE INDEX IF NOT EXISTS idx_history_ts ON history(ts)")
+            con.commit()
+        finally:
+            con.close()
 
     @contextmanager
     def locked(self):
-        with self.lock_path.open("a+", encoding="utf-8") as handle:
-            fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
-            try:
-                yield
-            finally:
-                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+        """Cross-process single-writer lock that works on Windows, Linux and macOS.
+
+        The mutex is a SQLite ``BEGIN IMMEDIATE`` write transaction: no
+        platform-specific file locking is needed, and every writer that opens the
+        same index.db (e.g. two agents on one project) serializes on it. The
+        yielded connection must be used for SQLite writes inside the section.
+        Do not nest ``locked()`` within itself - a second connection in the same
+        process would wait for the lock it already holds.
+        """
+        con = self._connect()
+        try:
+            con.execute("BEGIN IMMEDIATE")
+        except BaseException:
+            con.close()
+            raise
+        try:
+            yield con
+            con.commit()
+        except BaseException:
+            con.rollback()
+            raise
+        finally:
+            con.close()
 
     def _atomic_write(self, path: Path, text: str) -> None:
         tmp = path.with_name(f"{path.name}.tmp-{os.getpid()}-{uuid.uuid4().hex[:6]}")
         tmp.write_text(text, encoding="utf-8")
-        os.replace(tmp, path)
+        delay = 0.05
+        last_error: PermissionError | None = None
+        for _ in range(8):
+            try:
+                os.replace(tmp, path)
+                return
+            except PermissionError as exc:
+                # Windows: the destination may be briefly open by a concurrent
+                # reader/writer; retry with backoff instead of failing the op.
+                last_error = exc
+                time.sleep(delay)
+                delay = min(delay * 2, 1.0)
+        try:
+            tmp.unlink(missing_ok=True)
+        except OSError:
+            pass
+        if last_error is not None:
+            raise last_error
 
     def read_core(self) -> dict:
         return json.loads(self.core_path.read_text(encoding="utf-8"))
@@ -147,21 +209,49 @@ class MemoryStore:
         session_id: str | None = None,
         session_label: str | None = None,
     ) -> dict:
-        with self.locked():
-            msg = {
-                "id": uuid.uuid4().hex[:12],
-                "role": role,
-                "content": content,
-                "ts": time.time(),
-            }
-            if private:
-                msg["private"] = True
-            recent = self.read_recent(session_id)
-            recent.append(msg)
-            recent = recent[-self.recent_limit:]
-            self.write_recent(recent, session_id)
-            if not private:
-                self._index(role, content, msg["ts"], session_id, session_label)
+        with self.locked() as con:
+            msg = self._append_locked(con, role, content, private, session_id, session_label)
+        return msg
+
+    def append_messages(
+        self,
+        items: list,
+        session_id: str | None = None,
+        session_label: str | None = None,
+    ) -> int:
+        """Append a batch of ``{role, content, private?}`` records in one locked pass.
+
+        Used by the bridge so a session tail sync costs one Python process, not
+        one per message. Returns the number of records actually appended.
+        """
+        appended = 0
+        with self.locked() as con:
+            for item in items or []:
+                role = item.get("role")
+                content = item.get("content")
+                if role not in ("user", "assistant") or not isinstance(content, str) or not content:
+                    continue
+                self._append_locked(
+                    con, role, content, bool(item.get("private")), session_id, session_label
+                )
+                appended += 1
+        return appended
+
+    def _append_locked(self, con, role, content, private, session_id, session_label) -> dict:
+        msg = {
+            "id": uuid.uuid4().hex[:12],
+            "role": role,
+            "content": content,
+            "ts": time.time(),
+        }
+        if private:
+            msg["private"] = True
+        recent = self.read_recent(session_id)
+        recent.append(msg)
+        recent = recent[-self.recent_limit:]
+        self.write_recent(recent, session_id)
+        if not private:
+            self._index(role, content, msg["ts"], session_id, session_label, con=con)
         return msg
 
     def _index(
@@ -171,13 +261,18 @@ class MemoryStore:
         ts: float,
         session_id: str | None = None,
         session_label: str | None = None,
+        con: "sqlite3.Connection | None" = None,
     ) -> None:
-        with self._connect() as con:
-            con.execute(
-                "INSERT INTO history (role, content, ts, private, session_id, session_label)"
-                " VALUES (?, ?, ?, 0, ?, ?)",
-                (role, content, ts, session_id, session_label),
-            )
+        sql = (
+            "INSERT INTO history (role, content, ts, private, session_id, session_label)"
+            " VALUES (?, ?, ?, 0, ?, ?)"
+        )
+        params = (role, content, ts, session_id, session_label)
+        if con is not None:
+            con.execute(sql, params)
+            return
+        with self._connect() as own:
+            own.execute(sql, params)
 
     def history_count(self) -> int:
         with self._connect() as con:

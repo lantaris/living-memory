@@ -57,6 +57,15 @@ export type AppendOptions = SessionRef & {
   private?: boolean
 }
 
+export type AppendItem = {
+  role: "user" | "assistant"
+  content: string
+  private?: boolean
+}
+
+export type AppendResult = { ok: boolean; recent: number }
+export type AppendBatchResult = { ok: boolean; appended: number; recent: number }
+
 const DEFAULT_TIMEOUT_MS = 600_000
 
 export class MemoryBridge {
@@ -70,10 +79,24 @@ export class MemoryBridge {
     role: "user" | "assistant",
     content: string,
     options: AppendOptions = {},
-  ): Promise<BridgeResult<{ ok: boolean; recent: number }>> {
-    const args = ["append", "--role", role, "--content", content]
+  ): Promise<BridgeResult<AppendResult>> {
+    const args = ["append", "--role", role, "--stdin"]
     if (options.private) args.push("--private")
-    return this.run(args, 15_000, options)
+    return this.run<AppendResult>(args, 15_000, options, content)
+  }
+
+  /**
+   * Append several messages with ONE Python process (content travels on stdin
+   * as JSONL). Message text never goes into argv: argv has hard length limits
+   * (~32 KB command line on Windows, ~128 KB per argument on Linux).
+   */
+  appendBatch(
+    items: AppendItem[],
+    session: SessionRef = {},
+  ): Promise<BridgeResult<AppendBatchResult>> {
+    const body =
+      items.map((item) => JSON.stringify(item)).join("\n") + (items.length > 0 ? "\n" : "")
+    return this.run<AppendBatchResult>(["append", "--batch"], 60_000, session, body)
   }
 
   context(session?: SessionRef): Promise<BridgeResult<ContextData>> {
@@ -100,9 +123,11 @@ export class MemoryBridge {
     commandArgs: string[],
     timeoutMs: number,
     session?: SessionRef,
+    stdinData?: string,
   ): Promise<BridgeResult<T>> {
-    const { pythonBin, pythonDir, dataDir, provider, recentLimit } = this.config
+    const { pythonBin, pythonArgs, pythonDir, dataDir, provider, recentLimit } = this.config
     const args = [
+      ...pythonArgs,
       path.join(pythonDir, "cli.py"),
       "--data-dir",
       dataDir,
@@ -124,9 +149,20 @@ export class MemoryBridge {
       let settled = false
 
       const child = spawn(pythonBin, args, {
-        env: { ...process.env, MEMORY_PLUGIN_DISABLE: "1" },
-        stdio: ["ignore", "pipe", "pipe"],
+        // PYTHONUTF8=1 keeps Russian text intact regardless of the Windows locale;
+        // MEMORY_PLUGIN_DISABLE=1 is inherited by nested `opencode run` calls so the
+        // memory plugin cannot recurse into itself during compression.
+        env: { ...process.env, MEMORY_PLUGIN_DISABLE: "1", PYTHONUTF8: "1" },
+        stdio: stdinData === undefined ? ["ignore", "pipe", "pipe"] : ["pipe", "pipe", "pipe"],
+        windowsHide: true,
       })
+
+      if (stdinData !== undefined && child.stdin) {
+        child.stdin.on("error", () => {
+          // the child may exit before consuming stdin; the close handler reports it
+        })
+        child.stdin.end(stdinData, "utf8")
+      }
 
       const timer = setTimeout(() => {
         if (settled) return
@@ -135,10 +171,10 @@ export class MemoryBridge {
         resolve({ ok: false, error: `python timed out after ${timeoutMs}ms` })
       }, timeoutMs)
 
-      child.stdout.on("data", (chunk) => {
+      child.stdout?.on("data", (chunk) => {
         stdout += String(chunk)
       })
-      child.stderr.on("data", (chunk) => {
+      child.stderr?.on("data", (chunk) => {
         stderr += String(chunk)
       })
       child.on("error", (error) => {
@@ -169,7 +205,7 @@ export class MemoryBridge {
 function formatSpawnError(error: Error): string {
   const code = (error as NodeJS.ErrnoException).code
   if (code === "ENOENT") {
-    return "Python 3.10+ was not found. Install Python and make sure `python3` is on PATH (or set options.pythonBin / MEMORY_PLUGIN_PYTHON)."
+    return "Python 3.10+ was not found (tried `python3`, `python`, `py -3`). Install Python and make sure it is on PATH, or set options.pythonBin / MEMORY_PLUGIN_PYTHON."
   }
   return `${code ?? "spawn error"}: ${error.message}`
 }

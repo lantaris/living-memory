@@ -218,7 +218,12 @@ class OpencodeCLIProvider(LLMProvider):
             cmd += ["--model", self.model]
         cmd.append(prompt)
         proc = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=self.timeout
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=self.timeout,
         )
         if proc.returncode != 0:
             raise RuntimeError(f"opencode run failed: {proc.stderr.strip()}")

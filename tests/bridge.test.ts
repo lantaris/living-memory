@@ -51,6 +51,27 @@ test("bridge: status, append, context, search, compact-if-full", async () => {
   if (direct.ok) assert.equal(direct.data.compressed, false)
 })
 
+test("bridge: append --batch writes several messages in one call", async () => {
+  const dataDir = tempDir("ocm-batch-")
+  const config = resolveConfig(process.cwd(), { dataDir, provider: "mock" })
+  const bridge = new MemoryBridge(config)
+
+  const result = await bridge.appendBatch([
+    { role: "user", content: "Первый вопрос про хранилище." },
+    { role: "assistant", content: "Ответ про SQLite." },
+    { role: "user", content: "Второй вопрос про деплой." },
+  ])
+  assert.equal(result.ok, true, result.ok ? "" : result.error)
+  if (result.ok) {
+    assert.equal(result.data.appended, 3)
+    assert.equal(result.data.recent, 3)
+  }
+
+  const found = await bridge.search("деплой")
+  assert.equal(found.ok, true)
+  if (found.ok) assert.equal(found.data.results.length, 1)
+})
+
 test("bridge: full window triggers compression and flush clears it", async () => {
   const dataDir = tempDir("ocm-bridge2-")
   const config = resolveConfig(process.cwd(), { dataDir, provider: "mock", recentLimit: 10 })

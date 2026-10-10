@@ -22,6 +22,14 @@ def build_provider(name: str):
     return OpencodeCLIProvider()
 
 
+def read_stdin_text() -> str:
+    try:
+        sys.stdin.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
+    except Exception:
+        pass
+    return sys.stdin.read()
+
+
 def main() -> int:
     if sys.version_info < MIN_PYTHON:
         print(json.dumps({"ok": False, "error": "Python 3.10+ is required"}))
@@ -36,8 +44,14 @@ def main() -> int:
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_append = sub.add_parser("append")
-    p_append.add_argument("--role", required=True, choices=("user", "assistant"))
-    p_append.add_argument("--content", required=True)
+    p_append.add_argument("--role", choices=("user", "assistant"))
+    p_append.add_argument("--content")
+    p_append.add_argument("--stdin", action="store_true", help="read the message text from stdin (UTF-8)")
+    p_append.add_argument(
+        "--batch",
+        action="store_true",
+        help="read JSONL {role, content, private?} records from stdin and append in one pass",
+    )
     p_append.add_argument("--private", action="store_true")
 
     p_compact = sub.add_parser("compact")
@@ -55,6 +69,7 @@ def main() -> int:
     store = MemoryStore(args.data_dir, recent_limit=args.recent_limit)
     session_id = args.session
     session_label = args.session_label
+    exit_code = 0
 
     if args.command == "status":
         payload = {
@@ -66,14 +81,27 @@ def main() -> int:
             "session": session_id,
         }
     elif args.command == "append":
-        store.append_message(
-            args.role,
-            args.content,
-            private=args.private,
-            session_id=session_id,
-            session_label=session_label,
-        )
-        payload = {"ok": True, "recent": len(store.read_recent(session_id))}
+        if args.batch:
+            items = []
+            for line in read_stdin_text().splitlines():
+                line = line.strip()
+                if line:
+                    items.append(json.loads(line))
+            appended = store.append_messages(items, session_id=session_id, session_label=session_label)
+            payload = {"ok": True, "appended": appended, "recent": len(store.read_recent(session_id))}
+        elif args.role in ("user", "assistant") and (args.stdin or args.content is not None):
+            content = read_stdin_text() if args.stdin else args.content
+            store.append_message(
+                args.role,
+                content,
+                private=args.private,
+                session_id=session_id,
+                session_label=session_label,
+            )
+            payload = {"ok": True, "recent": len(store.read_recent(session_id))}
+        else:
+            payload = {"ok": False, "error": "append requires --role and one of --content / --stdin / --batch"}
+            exit_code = 1
     elif args.command == "context":
         payload = {
             "ok": True,
@@ -114,9 +142,10 @@ def main() -> int:
         payload = {"ok": True, "results": results}
     else:
         payload = {"ok": False, "error": f"unknown command: {args.command}"}
+        exit_code = 1
 
     print(json.dumps(payload, ensure_ascii=False))
-    return 0
+    return exit_code
 
 
 if __name__ == "__main__":
