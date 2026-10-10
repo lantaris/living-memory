@@ -14,6 +14,10 @@ new or changed goals, open questions. Do not retell the dialogue; write meeting 
 Never include anything marked private.
 If new information contradicts what CORE or TASKS already contain, the newer fact
 wins; make the change explicit, e.g. "Rust (switched from Python)".
+When a CORE item is no longer true (the user changed their mind or it was
+superseded), list its exact current text in "forget" so it is removed, and put the
+replacement into the normal fields. Use "forget" only with text that literally
+appears in CORE.
 
 Strict categorization:
 - Decisions (technology or approach choices) go ONLY into tasks[].resolved.
@@ -36,6 +40,7 @@ Return STRICT JSON only, no markdown fences:
 {
   "core": {"user": {"name": "...", "role": "..."}, "preferences": {"likes": [...], "dislikes": [...]}, "goals": [...]},
   "tasks": [{"topic": "...", "status": "open|in-progress|done", "resolved": ["..."], "open": ["..."]}],
+  "forget": {"likes": ["..."], "dislikes": ["..."], "goals": ["..."]},
   "uncertain": [{"kind": "goal|like|dislike|task", "text": "..."}],
   "used": [1, 2],
   "notes": "2-3 lines: what was learned, what changed in the user model"
@@ -45,6 +50,9 @@ Return STRICT JSON only, no markdown fences:
   never duplicate them in core/tasks.
 - "used": numbers of MESSAGES (1-based) you extracted any fact or topic from.
   Messages not listed may be dropped from the dialogue window.
+- "forget": exact CORE texts that are no longer true. Example: the user switched
+  from Python to Rust -> "forget": {"likes": ["Python"]} together with
+  "core": {"preferences": {"likes": ["Rust (switched from Python)"]}}.
 Omit keys that have no updates. Mark a topic as done when it is fully closed."""
 
 LOSS_MIN_CHARS = 15
@@ -107,8 +115,42 @@ def deep_merge(base: dict, patch: dict) -> dict:
 
 
 def apply_core_updates(core: dict, patch: dict) -> dict:
-    clean_patch = {key: value for key, value in patch.items() if key != "meta"}
+    clean_patch = {
+        key: value for key, value in patch.items() if key not in ("meta", "forget")
+    }
     return deep_merge(core, clean_patch)
+
+
+def apply_forget(core: dict, forget: dict) -> list:
+    """Remove explicitly outdated items from CORE ("the newer fact wins").
+
+    Accepts the normalized ``forget`` section; returns the removed (key, text)
+    pairs so the caller can write them into the loss log - the texts stay
+    findable in the full history index.
+    """
+    removed: list = []
+    if not isinstance(forget, dict):
+        return removed
+    preferences = core.get("preferences")
+    for key in ("likes", "dislikes"):
+        stale = forget.get(key) or []
+        if not stale or not isinstance(preferences, dict):
+            continue
+        bucket = preferences.get(key)
+        if not isinstance(bucket, list):
+            continue
+        for item in stale:
+            if item in bucket:
+                bucket.remove(item)
+                removed.append((key, item))
+    stale_goals = forget.get("goals") or []
+    goals = core.get("goals")
+    if stale_goals and isinstance(goals, list):
+        for item in stale_goals:
+            if item in goals:
+                goals.remove(item)
+                removed.append(("goals", item))
+    return removed
 
 
 def _belongs_to_session(entry: dict, session_id: str | None) -> bool:
@@ -204,6 +246,11 @@ def run_compression(
             store.log_loss(
                 role="patch", text=entry["text"], reason=entry["reason"], indexed=False
             )
+        removed = apply_forget(core, clean_result.get("forget") or {})
+        for key, text in removed:
+            store.log_loss(
+                role="patch", text=text, reason=f"forgotten:core.{key}", indexed=True
+            )
         core = apply_core_updates(core, clean_result.get("core") or {})
         tasks = apply_task_updates(
             tasks,
@@ -218,6 +265,13 @@ def run_compression(
             )
         uncertain_items = clean_result.get("uncertain") or []
         if uncertain_items:
+            for duplicate in _uncertain_duplicates(uncertain_items, core, tasks):
+                store.log_loss(
+                    role="patch",
+                    text=duplicate.get("text") or "",
+                    reason="patch:uncertain:duplicate_of_core",
+                    indexed=False,
+                )
             store.append_pending(uncertain_items)
         _record_losses(store, public_messages, result, core, tasks)
         core.setdefault("meta", {})
@@ -278,6 +332,27 @@ def _record_losses(store, public_messages: list, result: dict, core: dict, tasks
                 reason="not_used_by_compression",
                 indexed=True,
             )
+
+
+def _normalize_for_match(text: str) -> str:
+    return re.sub(r"\s+", " ", re.sub(r"[^\w\s]", " ", text.lower())).strip()
+
+
+def _uncertain_duplicates(uncertain_items: list, core: dict, tasks: list) -> list:
+    """Uncertain facts the model ALSO wrote into core/tasks despite the prompt.
+
+    Detected and logged (silent cleanup would need semantics we do not have);
+    the item still goes to the confirmation queue.
+    """
+    blob = _normalize_for_match(
+        json.dumps(core, ensure_ascii=False) + " " + json.dumps(tasks, ensure_ascii=False)
+    )
+    duplicates = []
+    for item in uncertain_items:
+        norm = _normalize_for_match((item or {}).get("text") or "")
+        if norm and norm in blob:
+            duplicates.append(item)
+    return duplicates
 
 
 def _lexically_used(text: str, summary_blob: str) -> bool:

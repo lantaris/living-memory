@@ -160,6 +160,19 @@ def normalize_patch(patch: dict, core: dict, tasks: list) -> tuple[dict, list]:
         cleaned_tasks.append(cleaned_entry)
     clean["tasks"] = cleaned_tasks
 
+    forget = patch.get("forget") or {}
+    cleaned_forget: dict = {}
+    if isinstance(forget, dict):
+        for key in ("likes", "dislikes", "goals"):
+            limit = MAX_GOAL if key == "goals" else MAX_PREFERENCE
+            items = forget.get(key) or []
+            cleaned = _clean_list(items, limit, f"forget.{key}", logs)
+            if cleaned:
+                cleaned_forget[key] = cleaned
+    elif forget:
+        logs.append(_log(json.dumps(forget, ensure_ascii=False), "patch:rejected:forget_format"))
+    clean["forget"] = cleaned_forget
+
     clean["uncertain"] = patch.get("uncertain") or []
     clean["used"] = patch.get("used")
     clean["notes"] = patch.get("notes")
@@ -167,6 +180,12 @@ def normalize_patch(patch: dict, core: dict, tasks: list) -> tuple[dict, list]:
 
 
 def enforce_task_caps(tasks: list) -> tuple[list, list]:
+    """Trim task lists to the caps, PER SESSION.
+
+    The prototype capped globally, so a busy session could evict another
+    session's tasks; each session (and the shared default group) now keeps its
+    own newest ``MAX_OPEN_TASKS`` / ``MAX_CLOSED_TASKS``.
+    """
     logs: list = []
 
     def cap_group(group: list, cap: int, label: str) -> list:
@@ -182,8 +201,13 @@ def enforce_task_caps(tasks: list) -> tuple[list, list]:
             )
         return kept
 
-    open_tasks = [t for t in tasks if t.get("status") != "done"]
-    closed_tasks = [t for t in tasks if t.get("status") == "done"]
-    return cap_group(open_tasks, MAX_OPEN_TASKS, "open") + cap_group(
-        closed_tasks, MAX_CLOSED_TASKS, "closed"
-    ), logs
+    groups: dict = {}
+    for entry in tasks:
+        groups.setdefault(str(entry.get("session_id") or "default"), []).append(entry)
+    kept_tasks: list = []
+    for group in groups.values():
+        open_tasks = [t for t in group if t.get("status") != "done"]
+        closed_tasks = [t for t in group if t.get("status") == "done"]
+        kept_tasks.extend(cap_group(open_tasks, MAX_OPEN_TASKS, "open"))
+        kept_tasks.extend(cap_group(closed_tasks, MAX_CLOSED_TASKS, "closed"))
+    return kept_tasks, logs

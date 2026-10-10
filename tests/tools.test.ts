@@ -6,7 +6,7 @@ import path from "node:path"
 import { MemoryBridge } from "../src/bridge.js"
 import { resolveConfig } from "../src/config.js"
 import { bundledSkillPath, installSkill } from "../src/skill.js"
-import { createMemorySearchTool } from "../src/tools.js"
+import { createMemoryPendingTool, createMemorySearchTool } from "../src/tools.js"
 
 function tempDir(prefix: string): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix))
@@ -48,6 +48,21 @@ test("memory_search reports an empty result without inventing facts", async () =
   const searchTool = createMemorySearchTool(bridge, () => {})
   const result = await searchTool.execute({ query: "несуществующее-слово-xyz" }, fakeToolContext())
   assert.match(outputOf(result), /No matching messages/)
+})
+
+test("memory_pending: empty queue and unknown actions are handled", async () => {
+  const config = resolveConfig(process.cwd(), { dataDir: tempDir("ocm-pend-"), provider: "mock" })
+  const bridge = new MemoryBridge(config)
+  const pendingTool = createMemoryPendingTool(bridge, () => {})
+
+  const list = await pendingTool.execute({ action: "list" }, fakeToolContext())
+  assert.match(outputOf(list), /queue is empty/)
+
+  const bad = await pendingTool.execute({ action: "frobnicate" }, fakeToolContext())
+  assert.match(outputOf(bad), /Unknown action/)
+
+  const missing = await pendingTool.execute({ action: "approve" }, fakeToolContext())
+  assert.match(outputOf(missing), /needs the record id/)
 })
 
 test("memory_search degrades without throwing when python is missing", async () => {

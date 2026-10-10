@@ -22,6 +22,10 @@ def build_provider(name: str):
     return OpencodeCLIProvider()
 
 
+def pending_count(store) -> int:
+    return sum(1 for record in store.read_pending() if record.get("status") == "pending")
+
+
 def read_stdin_text() -> str:
     try:
         sys.stdin.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
@@ -52,7 +56,11 @@ def main() -> int:
         action="store_true",
         help="read JSONL {role, content, private?} records from stdin and append in one pass",
     )
-    p_append.add_argument("--private", action="store_true")
+    p_append.add_argument(
+        "--private",
+        action="store_true",
+        help="store the message without indexing it (engine capability; adapters may mark sensitive turns)",
+    )
 
     p_compact = sub.add_parser("compact")
     p_compact.add_argument("--if-full", action="store_true")
@@ -64,6 +72,10 @@ def main() -> int:
     p_search = sub.add_parser("search")
     p_search.add_argument("--query", required=True)
     p_search.add_argument("--limit", type=int, default=5)
+
+    p_pending = sub.add_parser("pending")
+    p_pending.add_argument("action", choices=("list", "approve", "reject"))
+    p_pending.add_argument("--id", type=int)
 
     args = parser.parse_args()
     store = MemoryStore(args.data_dir, recent_limit=args.recent_limit)
@@ -77,6 +89,7 @@ def main() -> int:
             "python": sys.version.split()[0],
             "data_dir": str(Path(args.data_dir).resolve()),
             "recent": len(store.read_recent(session_id)),
+            "pending": pending_count(store),
             "provider": args.provider,
             "session": session_id,
         }
@@ -156,6 +169,25 @@ def main() -> int:
             for hit in store.search(args.query, limit=args.limit)
         ]
         payload = {"ok": True, "results": results}
+    elif args.command == "pending":
+        if args.action == "list":
+            pending = [
+                record for record in store.read_pending() if record.get("status") == "pending"
+            ]
+            payload = {"ok": True, "pending": pending, "count": len(pending)}
+        elif args.id is None:
+            payload = {"ok": False, "error": "pending approve/reject requires --id"}
+            exit_code = 1
+        else:
+            record = store.resolve_pending(args.id, approve=args.action == "approve")
+            if record is None:
+                payload = {
+                    "ok": False,
+                    "error": f"pending record {args.id} not found or already resolved",
+                }
+                exit_code = 1
+            else:
+                payload = {"ok": True, "record": record}
     else:
         payload = {"ok": False, "error": f"unknown command: {args.command}"}
         exit_code = 1

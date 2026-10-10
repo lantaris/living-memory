@@ -51,3 +51,66 @@ export function createMemorySearchTool(
     },
   })
 }
+
+export function createMemoryPendingTool(
+  bridge: MemoryBridge,
+  logLine: (message: string) => void,
+  debug = false,
+) {
+  return tool({
+    description:
+      "Memory confirmation queue: list facts the memory is unsure about, then approve (write into core memory) or reject them. " +
+      "Use when the user asks what memory is unsure about, or confirms/denies a fact recorded tentatively.",
+    args: {
+      action: tool.schema.string().describe("One of: list, approve, reject."),
+      id: tool.schema
+        .number()
+        .optional()
+        .describe("Queue record id for approve/reject (from list)."),
+    },
+    async execute(args) {
+      const action = args.action
+      if (debug) logLine(`memory_pending called: action=${action} id=${args.id ?? "-"}`)
+      if (action === "list") {
+        const result = await bridge.pendingList()
+        if (!result.ok) {
+          logLine(`memory_pending list failed: ${result.error}`)
+          return {
+            title: "memory_pending: list",
+            output: `Memory queue is unavailable (${result.error}). Continue without it.`,
+          }
+        }
+        const items = result.data.pending
+        if (items.length === 0) {
+          return { title: "memory_pending: list", output: "The confirmation queue is empty." }
+        }
+        const lines = items.map((item) => `#${item.id} [${item.kind ?? "other"}] ${item.text}`)
+        return { title: `memory_pending: list (${items.length})`, output: lines.join("\n") }
+      }
+      if (action !== "approve" && action !== "reject") {
+        return {
+          title: "memory_pending",
+          output: `Unknown action '${action}'. Use list, approve or reject.`,
+        }
+      }
+      const id = typeof args.id === "number" && Number.isFinite(args.id) ? args.id : null
+      if (id === null) {
+        return {
+          title: `memory_pending: ${action}`,
+          output: `Action '${action}' needs the record id (see list).`,
+        }
+      }
+      const result = await bridge.pendingResolve(id, action === "approve")
+      if (!result.ok) {
+        logLine(`memory_pending ${action} failed: ${result.error}`)
+        return { title: `memory_pending: ${action} ${id}`, output: `Queue action failed (${result.error}).` }
+      }
+      const record = result.data.record
+      const verb = action === "approve" ? "Approved" : "Rejected"
+      return {
+        title: `memory_pending: ${action} ${id}`,
+        output: `${verb} #${id} [${record.kind ?? "other"}]: ${record.text}`,
+      }
+    },
+  })
+}

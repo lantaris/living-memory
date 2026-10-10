@@ -138,6 +138,24 @@ class MemoryStore:
             ).fetchone()
             if not has_index:
                 con.execute("CREATE INDEX IF NOT EXISTS idx_history_ts ON history(ts)")
+            try:
+                has_fts = con.execute(
+                    "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'history_fts'"
+                ).fetchone()
+                if not has_fts:
+                    con.execute(
+                        "CREATE VIRTUAL TABLE IF NOT EXISTS history_fts USING fts5("
+                        "content, content='history', content_rowid='id', tokenize='unicode61')"
+                    )
+                    # index everything written before the FTS table existed
+                    con.execute("INSERT INTO history_fts(history_fts) VALUES('rebuild')")
+                con.execute(
+                    "CREATE TRIGGER IF NOT EXISTS history_fts_ai AFTER INSERT ON history BEGIN "
+                    "INSERT INTO history_fts(rowid, content) VALUES (new.id, new.content); END"
+                )
+            except sqlite3.OperationalError:
+                # SQLite built without FTS5 - search() falls back to LIKE
+                pass
             con.commit()
         finally:
             con.close()
@@ -321,24 +339,58 @@ class MemoryStore:
         with self._connect() as con:
             return con.execute("SELECT COUNT(*) FROM history").fetchone()[0]
 
+    @staticmethod
+    def _fts_query(query: str) -> str:
+        """Quote every token so user input can never be FTS5 syntax."""
+        tokens = [token for token in re.split(r"\s+", query.strip()) if token]
+        return " AND ".join(f'"{token.replace(chr(34), chr(34) * 2)}"' for token in tokens)
+
+    @staticmethod
+    def _like_pattern(query: str) -> str:
+        escaped = query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        return f"%{escaped}%"
+
     def search(self, query: str, limit: int = 5) -> list:
+        """Full-text search over the history (FTS5), falling back to LIKE.
+
+        LIKE stays for SQLite builds without FTS5; metacharacters are escaped
+        there, so a "%" in the query is a literal, not a wildcard.
+        """
+        query = (query or "").strip()
+        if not query:
+            return []
         with self._connect() as con:
+            has_fts = con.execute(
+                "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'history_fts'"
+            ).fetchone()
+            if has_fts and self._fts_query(query):
+                try:
+                    rows = con.execute(
+                        "SELECT h.id, h.role, h.content, h.ts, h.session_id, h.session_label "
+                        "FROM history_fts f JOIN history h ON h.id = f.rowid "
+                        "WHERE h.private = 0 AND history_fts MATCH ? ORDER BY rank LIMIT ?",
+                        (self._fts_query(query), limit),
+                    ).fetchall()
+                    return [self._search_row(row) for row in rows]
+                except sqlite3.OperationalError:
+                    pass  # query unsupported by this build -> LIKE below
             rows = con.execute(
                 "SELECT id, role, content, ts, session_id, session_label FROM history "
-                "WHERE private = 0 AND content LIKE ? ORDER BY id DESC LIMIT ?",
-                (f"%{query}%", limit),
+                "WHERE private = 0 AND content LIKE ? ESCAPE '\\' ORDER BY id DESC LIMIT ?",
+                (self._like_pattern(query), limit),
             ).fetchall()
-        return [
-            {
-                "id": row[0],
-                "role": row[1],
-                "content": row[2],
-                "ts": row[3],
-                "session_id": row[4],
-                "session_label": row[5],
-            }
-            for row in rows
-        ]
+        return [self._search_row(row) for row in rows]
+
+    @staticmethod
+    def _search_row(row) -> dict:
+        return {
+            "id": row[0],
+            "role": row[1],
+            "content": row[2],
+            "ts": row[3],
+            "session_id": row[4],
+            "session_label": row[5],
+        }
 
     def log_loss(self, role: str, text: str, reason: str, indexed: bool) -> dict:
         record = {

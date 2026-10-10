@@ -12,8 +12,25 @@ export type StatusData = {
   python: string
   data_dir: string
   recent: number
+  pending: number
   provider: string
   session: string | null
+}
+
+export type PendingRecord = {
+  id: number
+  ts?: number
+  kind?: string
+  text: string
+  status: string
+  resolved_at?: number
+  note?: string
+}
+
+export type PendingListData = {
+  ok: boolean
+  pending: PendingRecord[]
+  count: number
 }
 
 export type ContextData = {
@@ -118,6 +135,17 @@ export class MemoryBridge {
 
   search(query: string, limit = 5): Promise<BridgeResult<SearchData>> {
     return this.run<SearchData>(["search", "--query", query, "--limit", String(limit)], 15_000)
+  }
+
+  pendingList(): Promise<BridgeResult<PendingListData>> {
+    return this.run<PendingListData>(["pending", "list"], 15_000)
+  }
+
+  pendingResolve(
+    id: number,
+    approve: boolean,
+  ): Promise<BridgeResult<{ ok: boolean; record: PendingRecord }>> {
+    return this.run(["pending", approve ? "approve" : "reject", "--id", String(id)], 15_000)
   }
 
   private run<T>(
