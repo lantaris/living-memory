@@ -8,7 +8,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from compress import flush as flush_memory, maybe_compress, run_compression
+from compress import (
+    apply_compression_result,
+    flush as flush_memory,
+    maybe_compress,
+    prepare_compression,
+    run_compression,
+)
 from inject import build_system_prompt
 from llm import MockProvider, OpencodeCLIProvider
 from store import MemoryStore
@@ -66,16 +72,33 @@ def main() -> int:
     p_compact.add_argument("--if-full", action="store_true")
 
     sub.add_parser("flush")
-    sub.add_parser("context")
+    p_context = sub.add_parser("context")
+    p_context.add_argument(
+        "--no-tail", action="store_true", help="omit the live dialogue tail (core + tasks only)"
+    )
     sub.add_parser("status")
+
+    p_prep = sub.add_parser(
+        "compact-prepare",
+        help="print the compression prompt for an external LLM (prepare half)",
+    )
+    p_prep.add_argument(
+        "--all", action="store_true", help="compress the whole tail (flush semantics)"
+    )
+    sub.add_parser(
+        "compact-apply",
+        help="apply an external LLM's patch (reads {messages, result} JSON on stdin)",
+    )
 
     p_search = sub.add_parser("search")
     p_search.add_argument("--query", required=True)
     p_search.add_argument("--limit", type=int, default=5)
 
     p_pending = sub.add_parser("pending")
-    p_pending.add_argument("action", choices=("list", "approve", "reject"))
+    p_pending.add_argument("action", choices=("list", "approve", "reject", "add"))
     p_pending.add_argument("--id", type=int)
+    p_pending.add_argument("--text")
+    p_pending.add_argument("--kind", default="fact")
 
     args = parser.parse_args()
     store = MemoryStore(args.data_dir, recent_limit=args.recent_limit)
@@ -134,7 +157,9 @@ def main() -> int:
     elif args.command == "context":
         payload = {
             "ok": True,
-            "prompt": build_system_prompt(store, session_id, session_label),
+            "prompt": build_system_prompt(
+                store, session_id, session_label, include_recent=not args.no_tail
+            ),
             "recent": len(store.read_recent(session_id)),
         }
     elif args.command == "compact":
@@ -169,14 +194,53 @@ def main() -> int:
             for hit in store.search(args.query, limit=args.limit)
         ]
         payload = {"ok": True, "results": results}
+    elif args.command == "compact-prepare":
+        prep = prepare_compression(
+            store,
+            session_id=session_id,
+            session_label=session_label,
+            keep_recent=0 if args.all else None,
+        )
+        if prep is None or prep.get("prompt") is None:
+            payload = {"ok": True, "prepared": False}
+        else:
+            payload = {
+                "ok": True,
+                "prepared": True,
+                "prompt": prep["prompt"],
+                "messages": [
+                    {"id": m["id"], "role": m["role"], "content": m["content"]}
+                    for m in prep["messages"]
+                ],
+            }
+    elif args.command == "compact-apply":
+        data = json.loads(read_stdin_text())
+        messages = [m for m in (data.get("messages") or []) if isinstance(m, dict)]
+        result = data.get("result") or {}
+        prep = {
+            "all": messages,
+            "messages": messages,
+            "session_id": session_id,
+            "session_label": session_label,
+        }
+        applied = apply_compression_result(store, prep, result)
+        payload = {"ok": True, "notes": (applied or {}).get("notes")}
     elif args.command == "pending":
         if args.action == "list":
             pending = [
                 record for record in store.read_pending() if record.get("status") == "pending"
             ]
             payload = {"ok": True, "pending": pending, "count": len(pending)}
+        elif args.action == "add":
+            if not args.text or not args.text.strip():
+                payload = {"ok": False, "error": "pending add requires --text"}
+                exit_code = 1
+            else:
+                before = len(store.read_pending())
+                records = store.append_pending([{"kind": args.kind, "text": args.text}])
+                payload = {"ok": True, "record": records[-1] if len(records) > before else None}
         elif args.id is None:
-            payload = {"ok": False, "error": "pending approve/reject requires --id"}
+            payload = {"ok": False, "error": "pending approve/reject requires an action id"}
             exit_code = 1
         else:
             record = store.resolve_pending(args.id, approve=args.action == "approve")

@@ -49,6 +49,7 @@
 | Стенд после M1 (2026-10-10) | `npm test` **14/14**, `pytest` **8/8**, гонка двух процессов **0/20 сбоев**; движок — только stdlib |
 | Стенд после M2 (2026-10-10) | node **16/16**, pytest **20/20**; поиск — FTS5 (+LIKE-фолбэк); очередь `pending` с потребителем; forget-операции в сжатии |
 | OpenCode live (2026-10-10) | 1.18.31 + deepseek-flash: цикл запись→flush→core→инъекция→`memory_search` пройден; инъекция доказана на новой сессии |
+| Hermes live (2026-10-10) | doctor OK; provider available; prefetch 1×/турн (540 симв.); сжатие через `ctx.llm` применено; pending-зеркало on_memory_write (4 записи) |
 
 ## 2. Что реально дают хост-платформы (только подтверждённое)
 
@@ -180,6 +181,7 @@
 
 **Приёмка:** doctor без ошибок; в temp-профиле: ходы записались, prefetch инжектил (видно в логе/контексте), `memory_search` вернул прошлый ход, `on_pre_compress` записал до сжатия.
 **Evidence:** вывод doctor; лог сессии (`agent.log` — аудит ctx.llm и вызовы провайдера); файлы `.living-memory`.
+**Итог (2026-10-10, git-инсталляция, изолированный HERMES_HOME):** `hermes plugins doctor` — OK (манифест/импорт/регистрация, kind `exclusive`); `memory status` — Provider: living-memory, available. Живой цикл: prefetch отдаёт блок (540 символов) раз на турн, `sync_turn` батчем пишет хвост, **сжатие через хостовый `ctx.llm` применено живьём** (aux-ключ `living_memory_compress`, фоновый поток) — core наполнен, хвост урезан 10→5; `on_memory_write` зеркалит записи встроенной памяти в очередь (live: 4 записи); плагинный CLI `hermes living-memory status` работает; `on_pre_compress` отдаёт core+tasks-блок. Архитектура: движок остаётся единственным владельцем состояния — все операции через CLI-subprocess (импорт движка в процесс Hermes не делаем: имена `store`/`cli` затенят модули хоста); сжатие — двухфазное (`compact-prepare` → LLM хоста → `compact-apply`). Грабли, закрытые кодом и скиллом: aux-ключ — только `[a-z0-9_]`; у memory-провайдера `ctx` сокращённый (без `.llm`) — строим `PluginLlm(plugin_id="living-memory")`; daemon-потоки гибнут на выходе one-shot сессии — синхронный триггер в `on_session_end` + lock от двойного срабатывания; `agent_workspace` может быть относительным — резолвим; изолированный `HERMES_HOME` запускает ленивую сборку рантайма — для тестов `HERMES_DISABLE_LAZY_INSTALLS=1`; `HERMES_HOME` нельзя передавать в MSYS-форме `/c/...` (инцидент: состояние ушло в `D:\c\...`, удалено; основной дом не тронут). Осталось: `config_schema.py`, регистрация скилла (`ctx.register_skill`), P2/P5/P6.
 
 ### M5 — Общий стор, документация, релиз 1.0.0
 

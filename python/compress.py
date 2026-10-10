@@ -207,13 +207,19 @@ def apply_task_updates(
     return tasks
 
 
-def run_compression(
+def prepare_compression(
     store,
-    provider,
-    keep_recent: int | None = None,
     session_id: str | None = None,
     session_label: str | None = None,
-):
+    keep_recent: int | None = None,
+) -> dict | None:
+    """Snapshot one compression pass: the messages to compress + the LLM prompt.
+
+    Split out of :func:`run_compression` so an external LLM (e.g. the host's own
+    ``ctx.llm`` in the Hermes plugin) can run the call itself. ``prompt`` is None
+    when only private messages are involved; the whole call returns None when
+    there is nothing to compress at all.
+    """
     recent = store.read_recent(session_id)
     if keep_recent is None:
         keep_recent = max(1, store.recent_limit // 2)
@@ -228,9 +234,55 @@ def run_compression(
     public_messages = [m for m in to_compress if not m.get("private")]
     core = store.read_core()
     tasks = store.read_tasks()
-    if public_messages:
-        result = provider.summarize(core, tasks, public_messages, session_label)
+    prompt = (
+        build_compression_prompt(core, tasks, public_messages, session_label)
+        if public_messages
+        else None
+    )
+    return {
+        "core": core,
+        "tasks": tasks,
+        "all": to_compress,
+        "messages": public_messages,
+        "prompt": prompt,
+        "session_id": session_id,
+        "session_label": session_label,
+    }
+
+
+def run_compression(
+    store,
+    provider,
+    keep_recent: int | None = None,
+    session_id: str | None = None,
+    session_label: str | None = None,
+):
+    prep = prepare_compression(
+        store, session_id=session_id, session_label=session_label, keep_recent=keep_recent
+    )
+    if prep is None:
+        return None
+    if prep["prompt"] is not None:
+        result = provider.summarize(
+            prep["core"], prep["tasks"], prep["messages"], session_label
+        )
     else:
+        result = None
+    return apply_compression_result(store, prep, result)
+
+
+def apply_compression_result(store, prep: dict, result: dict | None):
+    """Apply the LLM's patch from a :func:`prepare_compression` snapshot.
+
+    Re-reads current state under the lock and removes only the snapshotted ids -
+    messages that arrived while the LLM was working are kept. ``result=None``
+    means "only private messages": nothing to apply, the pass only touches meta.
+    """
+    to_compress = prep["all"]
+    public_messages = prep["messages"]
+    session_id = prep.get("session_id")
+    session_label = prep.get("session_label")
+    if result is None:
         result = {"core": {}, "tasks": [], "notes": "нечего сжимать (только приватное)"}
 
     with store.locked():

@@ -19,7 +19,12 @@ def _session_label_for(task: dict) -> str:
     return text[:48] if len(text) > 48 else text
 
 
-def build_system_prompt(store, session_id: str | None = None, session_label: str | None = None) -> str:
+def build_system_prompt(
+    store,
+    session_id: str | None = None,
+    session_label: str | None = None,
+    include_recent: bool = True,
+) -> str:
     core = store.read_core()
     tasks = store.read_tasks()
     recent = store.read_recent(session_id)
@@ -74,12 +79,13 @@ def build_system_prompt(store, session_id: str | None = None, session_label: str
                 "# OTHER SESSIONS (read-only context, do not modify)\n" + "\n".join(lines)
             )
 
-    if recent:
-        tail = "\n".join(f"{m['role']}: {m['content']}" for m in recent)
-    else:
-        tail = "(no recent messages)"
-    suffix = " (this session)" if session_id is not None else ""
-    parts.append(f"# RECENT MESSAGES{suffix}\n" + tail)
+    if include_recent:
+        if recent:
+            tail = "\n".join(f"{m['role']}: {m['content']}" for m in recent)
+        else:
+            tail = "(no recent messages)"
+        suffix = " (this session)" if session_id is not None else ""
+        parts.append(f"# RECENT MESSAGES{suffix}\n" + tail)
     return "\n\n".join(parts)
 
 

@@ -1,0 +1,3 @@
+name: living-memory
+version: 0.3.0
+description: "Layered living memory: durable core facts, per-session tasks, loss log, confirmation queue and full-text history search - one store shared with the OpenCode plugin."

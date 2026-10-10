@@ -23,13 +23,11 @@
 - [ ] Решить с версией CLI: локальный opencode 1.18.31 при типах ^1.18.35 (апгрейд или пин типов на 1.18.31).
 - [ ] README: описать системный путь установки (`~/.config/opencode` — npm-проект плагинов) и проверить его руками.
 
-## M4 — Адаптер Hermes (MemoryProvider) (детали — DESIGN.md §5/M4)
+## M4 — Адаптер Hermes (остаток; детали — DESIGN.md §5/M4)
 
-- [ ] Корневые файлы плагина: `plugin.yaml`, `__init__.py`, `cli.py`, `config_schema.py`.
-- [ ] Провайдер: `initialize`/`sync_turn`/`prefetch`/`on_pre_compress`/`on_memory_write`/tools/`recall_status`.
-- [ ] Компрессия через `ctx.llm` + `register_auxiliary_task`, фоновый поток (по P1).
-- [ ] CLI `hermes living-memory status|search|pending|compact`.
-- [ ] Проверка: `hermes plugins doctor` + сессии в temp-HERMES_HOME.
+- [ ] `config_schema.py` (панель настроек Desktop) и регистрация скилла через `ctx.register_skill()`.
+- [ ] README: раздел установки Hermes (drop-in в `$HERMES_HOME/plugins/` + `memory.provider`).
+- [ ] P2/P5/P6: полный счёт prefetch на интерактивной сессии, живая компакция, замер стоимости.
 
 ## M5 — Общий стор, документация, релиз 1.0.0 (детали — DESIGN.md §5/M5)
 
