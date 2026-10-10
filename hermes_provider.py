@@ -53,6 +53,14 @@ def _load_plugin_config() -> dict:
         return {}
 
 
+def _read_debug_option() -> bool:
+    """`debug` from ``plugins.living-memory`` config; env fallback; off by default."""
+    value = (_load_plugin_config() or {}).get("debug")
+    if value is None:
+        return os.environ.get("MEMORY_PLUGIN_DEBUG") == "1"
+    return bool(value)
+
+
 def _find_project_root(start: Path) -> Path:
     """Walk up from *start* to the project root (a ``.git`` or an existing store)."""
     current = start
@@ -123,6 +131,7 @@ class LivingMemoryProvider(MemoryProvider):
         self._last_status: Optional[RecallStatus] = None
         self._lock = threading.Lock()
         self._compress_lock = threading.Lock()
+        self._debug = False
 
     # -- engine plumbing ---------------------------------------------------
     def is_available(self) -> bool:
@@ -150,6 +159,7 @@ class LivingMemoryProvider(MemoryProvider):
                 self._session_label or session_id,
             ]
         cmd += args
+        started = time.monotonic()
         try:
             proc = subprocess.run(
                 cmd,
@@ -164,6 +174,10 @@ class LivingMemoryProvider(MemoryProvider):
         except Exception as exc:  # spawn failures must never break the session
             self._log(f"engine spawn failed: {exc}")
             return None
+        self._log_debug(
+            f"engine {args[0] if args else '?'} rc={proc.returncode} "
+            f"in {int((time.monotonic() - started) * 1000)}ms"
+        )
         payload: Optional[dict] = None
         try:
             payload = json.loads(proc.stdout.strip().splitlines()[-1])
@@ -187,6 +201,11 @@ class LivingMemoryProvider(MemoryProvider):
         except Exception:
             pass
 
+    def _log_debug(self, message: str) -> None:
+        """Verbose trail for real-task observation; enabled by the debug option."""
+        if self._debug:
+            self._log(f"debug: {message}")
+
     def _spawn(self, target) -> None:
         try:
             spawn_context_thread(target, name="living-memory-bg").start()
@@ -199,8 +218,9 @@ class LivingMemoryProvider(MemoryProvider):
         self._agent_context = str(kwargs.get("agent_context") or "primary")
         data_dir = resolve_data_dir(kwargs)
         self._data_dir = data_dir
+        self._debug = _read_debug_option()
         self._log(
-            f"ready: session={session_id} context={self._agent_context} data={data_dir}"
+            f"ready: session={session_id} context={self._agent_context} data={data_dir} debug={self._debug}"
         )
         if self._agent_context == "primary":
             self._refresh_cache(self._session_id)
@@ -316,9 +336,11 @@ class LivingMemoryProvider(MemoryProvider):
             return
         if int(status.get("recent") or 0) < _RECENT_LIMIT:
             return
+        self._log_debug(f"compress due session={sid} recent={status.get('recent')}")
         prepared = self._engine(["compact-prepare"], session_id=sid, timeout=60)
         if not prepared or not prepared.get("prepared"):
             return
+        self._log_debug(f"compress prepared session={sid} prompt={len(prepared['prompt'])}ch")
         result = self._llm_json(prepared["prompt"])
         if result is None:
             self._log("compression skipped: LLM produced no JSON patch")

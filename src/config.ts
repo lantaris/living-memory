@@ -8,6 +8,7 @@ export type MemoryPluginOptions = {
   pythonBin?: string
   provider?: "opencode" | "mock"
   recentLimit?: number
+  debug?: boolean
 }
 
 export type ResolvedConfig = {
@@ -91,7 +92,7 @@ export function resolveConfig(directory: string, options: MemoryPluginOptions = 
     recentLimit: options.recentLimit ?? 10,
     logFile: path.join(dataDir, "plugin.log"),
     disabled: process.env.MEMORY_PLUGIN_DISABLE === "1",
-    debug: process.env.MEMORY_PLUGIN_DEBUG === "1",
+    debug: options.debug ?? process.env.MEMORY_PLUGIN_DEBUG === "1",
   }
 }
 

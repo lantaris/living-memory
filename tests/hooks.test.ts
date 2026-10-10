@@ -218,3 +218,58 @@ test("hooks: broken python does not throw and leaves no memory", async () => {
   )
   assert.equal(system.length, 0)
 })
+
+test("hooks: the debug option adds verbose lines to plugin.log", async () => {
+  const sessionID = "session-debug"
+  const messagesBySession: Record<string, FakeMessage[]> = { [sessionID]: [] }
+  const { dataDir, input, options } = makeHarness(messagesBySession, {
+    [sessionID]: { title: "Debug" },
+  })
+  const hooks = await createHooks(input, { ...options, debug: true })
+
+  await hooks.event!({
+    event: { type: "session.created", properties: { info: { id: sessionID, title: "Debug" } } },
+  } as never)
+  await hooks["chat.message"]!(
+    { sessionID, messageID: "m1" } as never,
+    { message: {}, parts: textPart("Привет.") } as never,
+  )
+  const system: string[] = []
+  await hooks["experimental.chat.system.transform"]!(
+    { sessionID } as never,
+    { system } as never,
+  )
+
+  const log = fs.readFileSync(path.join(dataDir, "plugin.log"), "utf8")
+  assert.match(log, /plugin input keys:/)
+  assert.match(log, /chat\.message: session=session-debug/)
+  assert.match(log, /sync: session-debug/)
+  assert.match(log, /context injected: chars=\d+ session=session-debug/)
+})
+
+test("hooks: without the debug option the log keeps the basic trail only", async () => {
+  const sessionID = "session-quiet"
+  const messagesBySession: Record<string, FakeMessage[]> = { [sessionID]: [] }
+  const { dataDir, input, options } = makeHarness(messagesBySession)
+
+  const hooks = await createHooks(input, options)
+  await hooks.event!({
+    event: { type: "session.created", properties: { info: { id: sessionID } } },
+  } as never)
+  await hooks["chat.message"]!(
+    { sessionID, messageID: "m1" } as never,
+    { message: {}, parts: textPart("Привет.") } as never,
+  )
+  const system: string[] = []
+  await hooks["experimental.chat.system.transform"]!(
+    { sessionID } as never,
+    { system } as never,
+  )
+
+  const log = fs.readFileSync(path.join(dataDir, "plugin.log"), "utf8")
+  assert.match(log, /session\.created session-quiet/)
+  assert.doesNotMatch(log, /plugin input keys:/)
+  assert.doesNotMatch(log, /chat\.message: session=/)
+  assert.doesNotMatch(log, /sync: session-/)
+  assert.doesNotMatch(log, /context injected:/)
+})

@@ -97,6 +97,12 @@ cd living-memory && npm install && npm run build
 | `pythonBin` | авто (`python3`/`python`/`py -3`) | интерпретатор Python |
 | `provider` | `opencode` | кто сжимает: `opencode` (LLM через `opencode run`) или `mock` (офлайн-эвристика, для тестов) |
 | `recentLimit` | `10` | размер оперативки |
+| `debug` | `false` | подробная трассировка в `<dataDir>/plugin.log` (входные данные хуков, синхронизации, инъекции) |
+
+Базовые события (запуск, решения хуков, сжатия, ошибки) пишутся в лог всегда;
+`debug: true` добавляет детали — по этому логу удобно смотреть, как память
+работает в реальных задачах. Альтернатива без правки конфига:
+переменная окружения `MEMORY_PLUGIN_DEBUG=1`.
 
 Перезапустите OpenCode после изменения конфига.
 
@@ -113,11 +119,17 @@ git clone https://github.com/lantaris/living-memory.git "$HERMES_HOME/plugins/li
 # 2. включить провайдер в $HERMES_HOME/config.yaml:
 #    memory:
 #      provider: living-memory
+#    plugins:
+#      living-memory:
+#        debug: true      # подробный лог в <проект>/.living-memory/hermes.log
 
 # 3. проверить
 hermes plugins doctor "$HERMES_HOME/plugins/living-memory" --ci
 hermes memory status          # Provider: living-memory, available
 ```
+
+Подробная трассировка включается опцией `plugins.living-memory.debug: true`
+(или env `MEMORY_PLUGIN_DEBUG=1`); базовые события пишутся в `hermes.log` всегда.
 
 Сжатие памяти в Hermes выполняется **вашей моделью Hermes** (`ctx.llm`) —
 отдельные ключи и CLI не нужны. Если модель недоступна, память продолжает
@@ -162,7 +174,8 @@ status|search|pending`.
 
 ```
 <dataDir>/
-  plugin.log        журнал плагина (ошибки, решения хуков)
+  plugin.log        журнал плагина OpenCode: базовые события всегда, детали при debug
+  hermes.log        журнал провайдера Hermes: базовые события всегда, детали при debug
   memory/
     core.json       ядро: пользователь, предпочтения, цели
     tasks.json      задачи: темы, статусы, решения, открытые пункты (+ session_id/метка)

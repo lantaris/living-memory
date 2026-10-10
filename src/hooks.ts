@@ -293,7 +293,12 @@ export async function createHooks(input: PluginInput, options?: PluginOptions): 
           logLine(`context failed: ${result.error}`)
           return
         }
-        if (result.data.prompt) output.system.push(wrapStoredMemory(result.data.prompt))
+        if (result.data.prompt) {
+          if (config.debug) logLine(`context injected: chars=${result.data.prompt.length} session=${sessionID}`)
+          output.system.push(wrapStoredMemory(result.data.prompt))
+        } else if (config.debug) {
+          logLine(`context empty for ${sessionID}`)
+        }
       } catch (error) {
         logLine(`system.transform hook error: ${String(error)}`)
       }
