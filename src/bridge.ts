@@ -1,4 +1,5 @@
-import { spawn } from "node:child_process"
+import { spawn, spawnSync } from "node:child_process"
+import type { ChildProcess } from "node:child_process"
 import path from "node:path"
 import type { ResolvedConfig } from "./config.js"
 
@@ -167,7 +168,7 @@ export class MemoryBridge {
       const timer = setTimeout(() => {
         if (settled) return
         settled = true
-        child.kill()
+        killProcessTree(child)
         resolve({ ok: false, error: `python timed out after ${timeoutMs}ms` })
       }, timeoutMs)
 
@@ -188,7 +189,7 @@ export class MemoryBridge {
         settled = true
         clearTimeout(timer)
         if (code !== 0) {
-          resolve({ ok: false, error: stderr.trim() || `python exited with code ${code}` })
+          resolve({ ok: false, error: pythonErrorMessage(stdout, stderr, code) })
           return
         }
         const lastLine = stdout.trim().split("\n").pop() ?? ""
@@ -199,6 +200,42 @@ export class MemoryBridge {
         }
       })
     })
+  }
+}
+
+function pythonErrorMessage(stdout: string, stderr: string, code: number | null): string {
+  // cli.py reports engine errors as an error-JSON line on stdout (stderr stays
+  // empty), so read that line instead of reporting a bare exit code.
+  const lastLine = stdout.trim().split("\n").pop() ?? ""
+  if (lastLine) {
+    try {
+      const payload = JSON.parse(lastLine) as { ok?: boolean; error?: unknown }
+      if (payload && payload.ok === false && typeof payload.error === "string" && payload.error.trim()) {
+        return payload.error.trim()
+      }
+    } catch {
+      // not the CLI error JSON - fall through to stderr
+    }
+  }
+  return stderr.trim() || `python exited with code ${code}`
+}
+
+function killProcessTree(child: ChildProcess): void {
+  // TerminateProcess does not cascade on Windows: a hung `opencode run` grandchild
+  // (spawned by the compression provider) would survive child.kill(). taskkill /T
+  // takes the whole tree. POSIX grandchildren would need a process group - planned
+  // with the live M3 checks.
+  if (child.pid && process.platform === "win32") {
+    try {
+      spawnSync("taskkill", ["/pid", String(child.pid), "/T", "/F"], { windowsHide: true })
+    } catch {
+      // fall through to the plain kill below
+    }
+  }
+  try {
+    child.kill("SIGKILL")
+  } catch {
+    // already gone
   }
 }
 

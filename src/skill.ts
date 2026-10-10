@@ -20,6 +20,7 @@ export function installSkill(packageRoot: string, projectDirectory: string): Ski
     if (fs.existsSync(target)) {
       const existing = fs.readFileSync(target, "utf8")
       if (existing === content) return { status: "unchanged", target }
+      // The bundled skill is package-owned: a stale project copy is replaced on start.
       fs.writeFileSync(target, content)
       return { status: "updated", target }
     }

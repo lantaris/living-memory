@@ -83,22 +83,38 @@ def main() -> int:
     elif args.command == "append":
         if args.batch:
             items = []
+            skipped = 0
             for line in read_stdin_text().splitlines():
                 line = line.strip()
-                if line:
-                    items.append(json.loads(line))
+                if not line:
+                    continue
+                try:
+                    item = json.loads(line)
+                except json.JSONDecodeError:
+                    item = None
+                if not isinstance(item, dict):
+                    skipped += 1
+                    continue
+                items.append(item)
             appended = store.append_messages(items, session_id=session_id, session_label=session_label)
             payload = {"ok": True, "appended": appended, "recent": len(store.read_recent(session_id))}
+            if skipped:
+                payload["skipped"] = skipped
+                sys.stderr.write(f"living-memory: skipped {skipped} malformed batch line(s)\n")
         elif args.role in ("user", "assistant") and (args.stdin or args.content is not None):
             content = read_stdin_text() if args.stdin else args.content
-            store.append_message(
-                args.role,
-                content,
-                private=args.private,
-                session_id=session_id,
-                session_label=session_label,
-            )
-            payload = {"ok": True, "recent": len(store.read_recent(session_id))}
+            if not content or not content.strip():
+                payload = {"ok": False, "error": "empty content"}
+                exit_code = 1
+            else:
+                store.append_message(
+                    args.role,
+                    content,
+                    private=args.private,
+                    session_id=session_id,
+                    session_label=session_label,
+                )
+                payload = {"ok": True, "recent": len(store.read_recent(session_id))}
         else:
             payload = {"ok": False, "error": "append requires --role and one of --content / --stdin / --batch"}
             exit_code = 1

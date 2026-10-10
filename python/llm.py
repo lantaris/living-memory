@@ -253,8 +253,3 @@ def extract_json(text: str) -> dict:
                     continue
         raise
 
-
-def get_default_provider() -> LLMProvider:
-    if os.environ.get("MEMORY_LLM_PROVIDER", "mock").lower() == "opencode":
-        return OpencodeCLIProvider()
-    return MockProvider()

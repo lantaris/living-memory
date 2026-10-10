@@ -95,6 +95,24 @@ test("bridge: full window triggers compression and flush clears it", async () =>
   if (status.ok) assert.equal(status.data.recent, 0)
 })
 
+test("bridge: engine errors surface with their message, not an exit code", async () => {
+  const base = tempDir("ocm-err-")
+  const filePath = path.join(base, "not-a-dir")
+  fs.writeFileSync(filePath, "x")
+  try {
+    const config = resolveConfig(process.cwd(), { dataDir: filePath, provider: "mock" })
+    const bridge = new MemoryBridge(config)
+    const status = await bridge.status()
+    assert.equal(status.ok, false)
+    if (!status.ok) {
+      assert.match(status.error, /Error/)
+      assert.doesNotMatch(status.error, /exited with code/)
+    }
+  } finally {
+    fs.rmSync(base, { recursive: true, force: true })
+  }
+})
+
 test("bridge: missing python degrades gracefully with a clear message", async () => {
   const config = resolveConfig(process.cwd(), {
     dataDir: tempDir("ocm-nopy-"),

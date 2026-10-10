@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
 import sqlite3
+import sys
 import time
 import uuid
 from contextlib import contextmanager
@@ -26,8 +28,19 @@ def _iso_now() -> str:
 
 
 def _safe_session_name(session_id: str) -> str:
-    cleaned = re.sub(r"[^A-Za-z0-9._-]", "_", str(session_id))
-    return cleaned[:96] or DEFAULT_SESSION
+    """Map a session id to a safe file name; collision-resistant.
+
+    Ids that are already safe stay as they are (existing files keep working);
+    anything the sanitizer rewrites or truncates gets a short hash of the
+    original id, so "a b" and "a/b" can no longer share one tail file.
+    """
+    text = str(session_id)
+    cleaned = re.sub(r"[^A-Za-z0-9._-]", "_", text)
+    if cleaned and cleaned == text and len(text) <= 96:
+        return text
+    digest = hashlib.sha1(text.encode("utf-8")).hexdigest()[:8]
+    base = cleaned[:72].strip("._-") or "session"
+    return f"{base}-{digest}"
 
 
 class MemoryStore:
@@ -48,16 +61,29 @@ class MemoryStore:
         self._init_db()
 
     def _ensure_defaults(self):
-        if not self.core_path.exists():
-            self.write_core(json.loads(json.dumps(DEFAULT_CORE)))
-        if not self.tasks_path.exists():
-            self.write_tasks([])
-        if not self.recent_path.exists():
-            self.recent_path.write_text("", encoding="utf-8")
-        if not self.loss_log_path.exists():
-            self.loss_log_path.write_text("", encoding="utf-8")
-        if not self.pending_path.exists():
-            self.pending_path.write_text("", encoding="utf-8")
+        self._create_if_missing(self.core_path, json.dumps(DEFAULT_CORE, ensure_ascii=False, indent=2))
+        self._create_if_missing(self.tasks_path, "[]")
+        self._create_if_missing(self.recent_path)
+        self._create_if_missing(self.loss_log_path)
+        self._create_if_missing(self.pending_path)
+
+    @staticmethod
+    def _create_if_missing(path: Path, text: str = "") -> None:
+        """Create a file atomically, never truncating an existing one.
+
+        ``exists() + write_text`` is a TOCTOU race: two processes initializing the
+        same fresh data dir could truncate a tail the other just wrote. O_EXCL
+        makes creation the atomic winner-takes-all step instead.
+        """
+        try:
+            fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            return
+        try:
+            if text:
+                os.write(fd, text.encode("utf-8"))
+        finally:
+            os.close(fd)
 
     def _connect(self) -> sqlite3.Connection:
         con = sqlite3.connect(self.db_path, timeout=10)
@@ -147,22 +173,30 @@ class MemoryStore:
         tmp.write_text(text, encoding="utf-8")
         delay = 0.05
         last_error: PermissionError | None = None
-        for _ in range(8):
-            try:
-                os.replace(tmp, path)
-                return
-            except PermissionError as exc:
-                # Windows: the destination may be briefly open by a concurrent
-                # reader/writer; retry with backoff instead of failing the op.
-                last_error = exc
-                time.sleep(delay)
-                delay = min(delay * 2, 1.0)
         try:
-            tmp.unlink(missing_ok=True)
-        except OSError:
-            pass
+            for _ in range(8):
+                try:
+                    os.replace(tmp, path)
+                    return
+                except PermissionError as exc:
+                    # Windows: the destination may be briefly open by a concurrent
+                    # reader/writer; retry with backoff instead of failing the op.
+                    last_error = exc
+                    time.sleep(delay)
+                    delay = min(delay * 2, 1.0)
+        except BaseException:
+            self._remove_quietly(tmp)
+            raise
+        self._remove_quietly(tmp)
         if last_error is not None:
             raise last_error
+
+    @staticmethod
+    def _remove_quietly(path: Path) -> None:
+        try:
+            path.unlink(missing_ok=True)
+        except OSError:
+            pass
 
     def read_core(self) -> dict:
         return json.loads(self.core_path.read_text(encoding="utf-8"))
@@ -190,7 +224,18 @@ class MemoryStore:
             line = line.strip()
             if not line:
                 continue
-            message = json.loads(line)
+            try:
+                message = json.loads(line)
+            except json.JSONDecodeError:
+                sys.stderr.write(
+                    f"living-memory: skipping malformed recent line {index + 1} in {path.name}\n"
+                )
+                continue
+            if not isinstance(message, dict):
+                sys.stderr.write(
+                    f"living-memory: skipping non-object recent line {index + 1} in {path.name}\n"
+                )
+                continue
             if "id" not in message:
                 message["id"] = f"legacy-{message.get('ts', f'{index}')}-{index}"
             messages.append(message)
@@ -227,6 +272,8 @@ class MemoryStore:
         appended = 0
         with self.locked() as con:
             for item in items or []:
+                if not isinstance(item, dict):
+                    continue
                 role = item.get("role")
                 content = item.get("content")
                 if role not in ("user", "assistant") or not isinstance(content, str) or not content:
@@ -251,28 +298,24 @@ class MemoryStore:
         recent = recent[-self.recent_limit:]
         self.write_recent(recent, session_id)
         if not private:
-            self._index(role, content, msg["ts"], session_id, session_label, con=con)
+            self._index(con, role, content, msg["ts"], session_id, session_label)
         return msg
 
     def _index(
         self,
+        con: "sqlite3.Connection",
         role: str,
         content: str,
         ts: float,
         session_id: str | None = None,
         session_label: str | None = None,
-        con: "sqlite3.Connection | None" = None,
     ) -> None:
-        sql = (
+        """Insert one history row; must run on the locked connection."""
+        con.execute(
             "INSERT INTO history (role, content, ts, private, session_id, session_label)"
-            " VALUES (?, ?, ?, 0, ?, ?)"
+            " VALUES (?, ?, ?, 0, ?, ?)",
+            (role, content, ts, session_id, session_label),
         )
-        params = (role, content, ts, session_id, session_label)
-        if con is not None:
-            con.execute(sql, params)
-            return
-        with self._connect() as own:
-            own.execute(sql, params)
 
     def history_count(self) -> int:
         with self._connect() as con:
