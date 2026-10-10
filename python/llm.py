@@ -213,12 +213,15 @@ class OpencodeCLIProvider(LLMProvider):
         from compress import build_compression_prompt
 
         prompt = build_compression_prompt(core, tasks, messages, session_label)
-        cmd = [shutil.which("opencode") or "opencode", "run"]
+        # --pure: no plugins in the nested run (belt to the MEMORY_PLUGIN_DISABLE env
+        # guard); --format json: parseable events; the prompt travels on stdin because
+        # a long transcript would exceed the Windows command-line limit.
+        cmd = [shutil.which("opencode") or "opencode", "run", "--pure", "--format", "json"]
         if self.model:
             cmd += ["--model", self.model]
-        cmd.append(prompt)
         proc = subprocess.run(
             cmd,
+            input=prompt,
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -226,8 +229,32 @@ class OpencodeCLIProvider(LLMProvider):
             timeout=self.timeout,
         )
         if proc.returncode != 0:
-            raise RuntimeError(f"opencode run failed: {proc.stderr.strip()}")
-        return extract_json(proc.stdout)
+            detail = (proc.stderr or proc.stdout).strip()
+            raise RuntimeError(f"opencode run failed: {detail[:500]}")
+        return extract_json(extract_text_from_events(proc.stdout))
+
+
+def extract_text_from_events(stdout: str) -> str:
+    """Collect assistant text from ``opencode run --format json`` JSONL events.
+
+    Each line is an event; assistant messages arrive as ``{"type": "text",
+    "part": {"text": ...}}``. Non-JSON lines (console noise from other tools) are
+    skipped; if no text events are found the raw output is returned so the plain
+    extract_json path still works on older OpenCode versions.
+    """
+    chunks: list[str] = []
+    for line in stdout.splitlines():
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        part = event.get("part") or {}
+        if event.get("type") == "text" and isinstance(part.get("text"), str):
+            chunks.append(part["text"])
+    return "\n".join(chunks) if chunks else stdout
 
 
 def extract_json(text: str) -> dict:
