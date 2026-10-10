@@ -1,0 +1,83 @@
+[
+  {
+    "topic": "expense tracker planning",
+    "status": "in-progress",
+    "resolved": [
+      "Single-user web app",
+      "Categories: food, transport, housing, entertainment",
+      "SQLite for data storage (single-user)",
+      "Standard library sqlite3 connector",
+      "No external services; file-based backup",
+      "Expenses table: id, amount, currency, category_id, date, note",
+      "Categories table: id, name, icon",
+      "Currency field kept for future (ruble only now)",
+      "Index on expenses.date for monthly summaries",
+      "API will be JSON at /api/expenses",
+      "Docker image: python:3.12-slim",
+      "Database in volume at /data with env var path",
+      "CI: single job (install deps, pytest, linter), deploy later",
+      "CI and CD separated; no deploy on first stage",
+      "Tests: CRUD for expenses + monthly sum + category distribution",
+      "Core module: pure functions over DB, no web/CLI",
+      "Deployment: Docker + Fly.io for MVP",
+      "Config via env vars: DATABASE_PATH, SECRET_KEY",
+      ".env.example for secrets (not committed)",
+      "MVP accepts brief downtime (stop, deploy, start); rolling updates later",
+      "Daily DB file backup to object storage",
+      "Manual SQL migrations via schema_version table and ordered scripts (no Alembic)",
+      "CSS variables for theming (light + dark themes)",
+      "Standard logging with levels and file rotation in production",
+      "Basic meta tags and favicon needed for browser tabs",
+      "MVP scope defined: CRUD, auth, migrations, Dockerfile, CI",
+      "Target: release MVP in 2 months",
+      "Project name: Копилка",
+      "CSV export moved to post-MVP (second wave)",
+      "No custom domains; Fly.io subdomain sufficient"
+    ],
+    "open": [
+      "Tech stack selection",
+      "Data storage approach",
+      "UI/UX requirements",
+      "Authentication needs",
+      "Design table schema (amounts, currencies, dates)",
+      "Auto-save implementation",
+      "Subcategories support (future)",
+      "Pagination: implement now or later?",
+      "CI/CD with GitHub Actions (tests on push)",
+      "Monthly expense charts for reports",
+      "Healthcheck endpoint for Fly.io",
+      "Backup strategy for SQLite database",
+      "Define minimum release scope",
+      "Bank statement import (future consideration)"
+    ],
+    "updated_at": "2026-10-10T03:05:40+00:00"
+  },
+  {
+    "topic": "authentication",
+    "status": "in-progress",
+    "resolved": [
+      "Health check endpoint /healthz with DB connection check",
+      "Auth middleware: single decorator, no role models",
+      "Single user, no roles needed",
+      "Password stored via env var + hash comparison at login",
+      "Single password from env var + signed cookie (no server sessions)",
+      "No registration, single user",
+      "Password value only via environment (not in code)"
+    ],
+    "open": [
+      "Write auth middleware decorator for protected routes",
+      "Logging requirements and implementation"
+    ],
+    "updated_at": "2026-10-10T03:03:41+00:00"
+  },
+  {
+    "topic": "documentation",
+    "status": "open",
+    "resolved": null,
+    "open": [
+      "README with setup and run instructions",
+      "Database schema description in README"
+    ],
+    "updated_at": "2026-10-10T03:05:05+00:00"
+  }
+]

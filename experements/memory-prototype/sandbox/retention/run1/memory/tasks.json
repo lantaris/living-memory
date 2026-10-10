@@ -1,0 +1,101 @@
+[
+  {
+    "topic": "expense tracker planning",
+    "status": "in-progress",
+    "resolved": [
+      "chose SQLite for single-user app",
+      "chose sqlite3 standard library for connector",
+      "no external services",
+      "project is free (local SQLite development)",
+      "designed expenses table (id, amount, currency, category_id, date, note)",
+      "designed categories table (id, name, icon)",
+      "single currency (RUB) with currency field reserved for future",
+      "add index on expenses.date for monthly summaries",
+      "API will be JSON at /api/expenses",
+      "Docker image: python:3.12-slim",
+      "DB in volume at /data",
+      "DB path via env variable",
+      "CI: GitHub Actions with tests on push",
+      "CI: single job with deps install, pytest, linter (no deploy)",
+      "tests: CRUD for expenses + monthly sum + category distribution",
+      "backend will provide monthly aggregates for charting",
+      "business logic in separate core module (pure functions over DB, no web/CLI deps)",
+      "deployment: Docker + Fly.io for MVP",
+      "config via environment variables: DATABASE_PATH and SECRET_KEY",
+      "add .env.example to avoid committing secrets",
+      "healthcheck endpoint for Fly.io",
+      "dark theme via CSS variables (light + dark tokens); switch optional for MVP",
+      "theme system as design tokens from start for easy future switching",
+      "basic meta tags and favicon needed for browser tabs",
+      "agreed on 2-month MVP timeline with current scope",
+      "project named 'Копилка' (Piggy Bank)",
+      "no custom domains needed — Fly.io provides subdomain",
+      "CSV export postponed to post-MVP (second wave)"
+    ],
+    "open": [
+      "define expense categories",
+      "choose tech stack",
+      "design data model",
+      "plan UI/UX",
+      "define specific expense categories",
+      "plan UI/UX (autosave as mandatory feature)",
+      "consider subcategories later",
+      "decide on pagination for /api/expenses",
+      "set up CI via GitHub Actions (tests on every push)",
+      "implement monthly charts/graphs for reports",
+      "CLI version as bonus (thin wrapper over core)",
+      "define minimum viable release scope",
+      "write README with setup instructions and database schema documentation",
+      "import from bank statements (post-MVP wish)"
+    ],
+    "updated_at": "2026-10-10T02:54:45+00:00"
+  },
+  {
+    "topic": "authentication",
+    "status": "in-progress",
+    "resolved": [
+      "single auth decorator for protected routes (no roles)",
+      "password via env var + hash comparison at login",
+      "password stored in password manager, not in code"
+    ],
+    "open": [
+      "write auth middleware (cookie check on protected routes)"
+    ],
+    "updated_at": "2026-10-10T02:54:45+00:00"
+  },
+  {
+    "topic": "deployment",
+    "status": "in-progress",
+    "resolved": [
+      "MVP: minute downtime acceptable (stop, deploy, restart)",
+      "rolling updates planned for post-MVP",
+      "daily DB backup to object storage",
+      "no custom domains needed — Fly.io provides subdomain"
+    ],
+    "open": [
+      "define backup strategy"
+    ],
+    "updated_at": "2026-10-10T02:54:45+00:00"
+  },
+  {
+    "topic": "logging",
+    "status": "done",
+    "resolved": [
+      "standard logging with levels; in production — file rotation"
+    ],
+    "open": [
+      "decide on logging strategy for error tracking"
+    ],
+    "updated_at": "2026-10-10T02:54:45+00:00"
+  },
+  {
+    "topic": "database migrations",
+    "status": "done",
+    "resolved": [
+      "manual SQL file migrations (no Alembic)",
+      "schema_version table for migration tracking"
+    ],
+    "open": null,
+    "updated_at": "2026-10-10T02:54:45+00:00"
+  }
+]

@@ -1,0 +1,23 @@
+{
+  "user": {
+    "name": "Иван",
+    "role": "бэкенд-разработчик",
+    "style": null
+  },
+  "preferences": {
+    "likes": [
+      "Python"
+    ],
+    "dislikes": [
+      "ORM"
+    ]
+  },
+  "goals": [
+    "выпустить MVP за два месяца"
+  ],
+  "meta": {
+    "version": 1,
+    "updated_at": "2026-10-10T04:30:43+00:00",
+    "compressions": 3
+  }
+}

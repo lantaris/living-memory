@@ -1,0 +1,30 @@
+[
+  {
+    "topic": "storage choice",
+    "status": "done",
+    "resolved": "SQLite chosen for single-user expense tracker",
+    "open": null,
+    "updated_at": "2026-10-10T00:46:57+00:00"
+  },
+  {
+    "topic": "table schema and migrations",
+    "status": "done",
+    "resolved": "schema: expenses and categories tables, migrations via schema_version",
+    "open": "design table schema and migrations for expense tracker",
+    "updated_at": "2026-10-10T00:47:14+00:00"
+  },
+  {
+    "topic": "deployment",
+    "status": "done",
+    "resolved": "Fly.io chosen for MVP (Dockerfile deploy)",
+    "open": null,
+    "updated_at": "2026-10-10T00:47:14+00:00"
+  },
+  {
+    "topic": "authentication",
+    "status": "in-progress",
+    "resolved": "single password from env, signed cookie for session",
+    "open": "implement auth middleware",
+    "updated_at": "2026-10-10T00:47:37+00:00"
+  }
+]

@@ -1,0 +1,30 @@
+{
+  "user": {
+    "name": "Иван",
+    "role": "backend developer",
+    "style": null
+  },
+  "preferences": {
+    "likes": [
+      "custom categories",
+      "SQLite for simplicity",
+      "auto-save",
+      "monthly expense charts",
+      "explicit SQL queries"
+    ],
+    "dislikes": [
+      "ORM"
+    ]
+  },
+  "goals": [
+    "Build a personal expense tracker web app",
+    "Add CLI version as bonus",
+    "Prepare MVP release for expense tracker",
+    "Release MVP in 2 months"
+  ],
+  "meta": {
+    "version": 1,
+    "updated_at": "2026-10-10T03:05:40+00:00",
+    "compressions": 19
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "user": {
+    "name": "Пётр",
+    "role": null,
+    "style": null
+  },
+  "preferences": {
+    "likes": [
+      "краткие и по делу ответы"
+    ],
+    "dislikes": []
+  },
+  "goals": [],
+  "meta": {
+    "version": 1,
+    "updated_at": "2026-10-10T01:37:33+00:00",
+    "compressions": 2
+  }
+}

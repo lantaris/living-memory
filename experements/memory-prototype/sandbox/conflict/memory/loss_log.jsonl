@@ -1,0 +1,6 @@
+{"ts": 1791606852.891231, "role": "user", "text": "Ещё открыт вопрос по схеме таблиц.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791606852.891362, "role": "user", "text": "Ок, заверни в миграцию.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791606852.902421, "role": "user", "text": "И не забудь про индексы по дате.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791606852.902529, "role": "user", "text": "Хорошо. Дальше по плану.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791606852.9177961, "role": "user", "text": "Да. И подбери библиотеку для SQLite — rusqlite?", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791606852.917904, "role": "user", "text": "Возьму rusqlite для MVP.", "reason": "not_used_by_compression", "indexed": true}

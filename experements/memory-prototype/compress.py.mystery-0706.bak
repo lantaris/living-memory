@@ -1,0 +1,295 @@
+#!/usr/bin/env python3
+"""
+Memory compression module.
+Extracts durable meaning from recent messages and updates core.json and tasks.json.
+"""
+
+import json
+import sqlite3
+import os
+from datetime import datetime
+from typing import List, Dict, Any, Optional
+
+MEMORY_DIR = os.path.join(os.path.dirname(__file__), "memory")
+CORE_PATH = os.path.join(MEMORY_DIR, "core.json")
+TASKS_PATH = os.path.join(MEMORY_DIR, "tasks.json")
+RECENT_PATH = os.path.join(MEMORY_DIR, "recent.jsonl")
+INDEX_DB = os.path.join(MEMORY_DIR, "index.db")
+
+COMPRESSION_INTERVAL = 5
+RECENT_WINDOW = 10
+
+
+def init_index_db():
+    """Initialize SQLite database for full history index."""
+    conn = sqlite3.connect(INDEX_DB)
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            role TEXT NOT NULL,
+            content TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            session_id TEXT
+        )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_content ON messages(content)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_timestamp ON messages(timestamp)")
+    conn.commit()
+    conn.close()
+
+
+def load_json(path: str, default: Any) -> Any:
+    """Load JSON file, return default if not exists or invalid."""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return default
+
+
+def save_json(path: str, data: Any):
+    """Save JSON file atomically."""
+    tmp_path = path + ".tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    os.replace(tmp_path, path)
+
+
+def load_recent() -> List[Dict[str, str]]:
+    """Load recent messages from JSONL."""
+    messages = []
+    try:
+        with open(RECENT_PATH, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    messages.append(json.loads(line))
+    except FileNotFoundError:
+        pass
+    return messages
+
+
+def save_recent(messages: List[Dict[str, str]]):
+    """Save recent messages to JSONL (keep only last RECENT_WINDOW)."""
+    messages = messages[-RECENT_WINDOW:]
+    with open(RECENT_PATH, "w", encoding="utf-8") as f:
+        for msg in messages:
+            f.write(json.dumps(msg, ensure_ascii=False) + "\n")
+
+
+def append_to_index(role: str, content: str, session_id: str = "default"):
+    """Append message to SQLite index."""
+    conn = sqlite3.connect(INDEX_DB)
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO messages (role, content, timestamp, session_id) VALUES (?, ?, ?, ?)",
+        (role, content, datetime.now().isoformat(), session_id)
+    )
+    conn.commit()
+    conn.close()
+
+
+def search_index(query: str, limit: int = 5) -> List[Dict[str, Any]]:
+    """Search full history index."""
+    conn = sqlite3.connect(INDEX_DB)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM messages WHERE content LIKE ? ORDER BY timestamp DESC LIMIT ?",
+        (f"%{query}%", limit)
+    )
+    results = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+    return results
+
+
+def extract_facts_from_messages(messages: List[Dict[str, str]]) -> Dict[str, Any]:
+    """
+    Simulate LLM-based fact extraction.
+    In production, this would call an actual LLM with the compression prompt.
+    """
+    facts = {
+        "core_updates": {},
+        "tasks_updates": [],
+        "uncertain": [],
+        "used_indices": []
+    }
+    
+    for idx, msg in enumerate(messages):
+        content = msg.get("content", "").lower()
+        role = msg.get("role", "")
+        
+        if role == "user":
+            if "любимый цвет" in content or "favorite color" in content:
+                color = None
+                for word in ["фиолетовый", "purple", "красный", "red", "синий", "blue", "зеленый", "green"]:
+                    if word in content:
+                        color = word
+                        break
+                if color:
+                    facts["core_updates"]["preferences.likes"] = [f"любимый цвет — {color}"]
+                    facts["used_indices"].append(idx)
+            
+            if "запомни" in content or "remember" in content:
+                facts["uncertain"].append({
+                    "kind": "like",
+                    "text": content[:200]
+                })
+                facts["used_indices"].append(idx)
+            
+            if "цель" in content or "goal" in content or "хочу" in content:
+                facts["core_updates"]["goals"] = [content[:100]]
+                facts["used_indices"].append(idx)
+            
+            if "не люблю" in content or "dislike" in content or "ненавижу" in content:
+                facts["core_updates"]["preferences.dislikes"] = [content[:100]]
+                facts["used_indices"].append(idx)
+    
+    return facts
+
+
+def apply_core_updates(core: Dict, updates: Dict):
+    """Apply updates to core.json."""
+    if "preferences.likes" in updates:
+        likes = updates["preferences.likes"]
+        for like in likes:
+            if like not in core["preferences"]["likes"]:
+                core["preferences"]["likes"].append(like[:100])
+    
+    if "preferences.dislikes" in updates:
+        dislikes = updates["preferences.dislikes"]
+        for dislike in dislikes:
+            if dislike not in core["preferences"]["dislikes"]:
+                core["preferences"]["dislikes"].append(dislike[:100])
+    
+    if "goals" in updates:
+        goals = updates["goals"]
+        for goal in goals:
+            if goal not in core["goals"]:
+                core["goals"].append(goal[:100])
+    
+    core["meta"]["updated_at"] = datetime.now().isoformat()
+    core["meta"]["compressions"] += 1
+
+
+def apply_tasks_updates(tasks: List[Dict], updates: List[Dict]):
+    """Apply updates to tasks.json."""
+    for update in updates:
+        topic = update.get("topic", "general")[:60]
+        existing = next((t for t in tasks if t["topic"] == topic), None)
+        
+        if not existing:
+            existing = {
+                "topic": topic,
+                "status": "open",
+                "resolved": [],
+                "open": []
+            }
+            tasks.append(existing)
+        
+        for resolved in update.get("resolved", []):
+            if resolved not in existing["resolved"]:
+                existing["resolved"].append(resolved[:120])
+        
+        for open_item in update.get("open", []):
+            if open_item not in existing["open"]:
+                existing["open"].append(open_item[:120])
+        
+        if not existing["open"]:
+            existing["status"] = "done"
+        else:
+            existing["status"] = "in-progress"
+    
+    while len(tasks) > 10:
+        tasks.pop(0)
+
+
+def compress():
+    """Main compression function."""
+    init_index_db()
+    
+    core = load_json(CORE_PATH, {
+        "user": {"name": None, "role": None},
+        "preferences": {"likes": [], "dislikes": []},
+        "goals": [],
+        "meta": {"version": 1, "updated_at": None, "compressions": 0}
+    })
+    
+    tasks = load_json(TASKS_PATH, [])
+    recent = load_recent()
+    
+    if len(recent) < COMPRESSION_INTERVAL:
+        print(f"Not enough messages for compression ({len(recent)}/{COMPRESSION_INTERVAL})")
+        return
+    
+    messages_to_compress = recent[:-RECENT_WINDOW + COMPRESSION_INTERVAL] if len(recent) > RECENT_WINDOW else recent[:COMPRESSION_INTERVAL]
+    
+    for msg in messages_to_compress:
+        append_to_index(msg.get("role", ""), msg.get("content", ""))
+    
+    facts = extract_facts_from_messages(messages_to_compress)
+    
+    apply_core_updates(core, facts.get("core_updates", {}))
+    apply_tasks_updates(tasks, facts.get("tasks_updates", []))
+    
+    save_json(CORE_PATH, core)
+    save_json(TASKS_PATH, tasks)
+    
+    new_recent = recent[len(messages_to_compress):]
+    save_recent(new_recent)
+    
+    print(f"Compression complete. Core updated: {bool(facts.get('core_updates'))}, Tasks updated: {bool(facts.get('tasks_updates'))}")
+    print(f"Recent messages: {len(new_recent)}")
+
+
+def add_message(role: str, content: str):
+    """Add a message to recent and index."""
+    recent = load_recent()
+    recent.append({"role": role, "content": content})
+    save_recent(recent)
+    append_to_index(role, content)
+    
+    if len(recent) % COMPRESSION_INTERVAL == 0:
+        compress()
+
+
+def get_context() -> str:
+    """Build context for LLM injection."""
+    core = load_json(CORE_PATH, {})
+    tasks = load_json(TASKS_PATH, [])
+    recent = load_recent()
+    
+    parts = []
+    
+    parts.append("=== ЯДРО ===")
+    parts.append(json.dumps(core, ensure_ascii=False, indent=2))
+    
+    parts.append("\n=== ЗАДАЧИ ===")
+    parts.append(json.dumps(tasks, ensure_ascii=False, indent=2))
+    
+    parts.append("\n=== ПОСЛЕДНИЕ СООБЩЕНИЯ ===")
+    for msg in recent:
+        parts.append(f"{msg['role']}: {msg['content']}")
+    
+    return "\n".join(parts)
+
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "compress":
+            compress()
+        elif sys.argv[1] == "context":
+            print(get_context())
+        elif sys.argv[1] == "search":
+            query = sys.argv[2] if len(sys.argv) > 2 else ""
+            results = search_index(query)
+            for r in results:
+                print(f"[{r['timestamp']}] {r['role']}: {r['content']}")
+        elif sys.argv[1] == "add":
+            role = sys.argv[2] if len(sys.argv) > 2 else "user"
+            content = " ".join(sys.argv[3:])
+            add_message(role, content)
+    else:
+        print("Usage: python compress.py [compress|context|search|add]")

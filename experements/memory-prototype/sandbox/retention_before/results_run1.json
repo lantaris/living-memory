@@ -1,0 +1,210 @@
+{
+  "run": 1,
+  "compressions": 19,
+  "modes": {
+    "A": {
+      "tokens": 2569,
+      "chars": 8992,
+      "answers": {
+        "1": "Иван",
+        "2": "бэкенд-разработчик",
+        "3": "Python",
+        "4": "ORM",
+        "5": "выпустить MVP за два месяца",
+        "6": "SQLite",
+        "7": "Docker + Fly.io",
+        "8": "один пароль из переменной окружения и подписанная cookie",
+        "9": "экспорт в CSV во вторую волну (после MVP)",
+        "10": "python:3.12-slim",
+        "11": "добавить индексы по дате в expenses",
+        "12": "настроить CI через GitHub Actions (тесты на каждый пуш)",
+        "13": "middleware для авторизации (проверка cookie на защищённых роутах)",
+        "14": "тёмная тема, favicon, метатеги",
+        "15": "индексы по дате в expenses",
+        "16": "да, кот Персик спит на клавиатуре",
+        "17": "про космос",
+        "18": "Эфиопия",
+        "19": "механическую клавиатуру",
+        "20": "собирал модели самолётов"
+      },
+      "verdicts": {
+        "1": "correct",
+        "2": "correct",
+        "3": "correct",
+        "4": "correct",
+        "5": "correct",
+        "6": "correct",
+        "7": "correct",
+        "8": "correct",
+        "9": "correct",
+        "10": "correct",
+        "11": "incorrect",
+        "12": "correct",
+        "13": "correct",
+        "14": "correct",
+        "15": "correct",
+        "16": "correct",
+        "17": "correct",
+        "18": "correct",
+        "19": "correct",
+        "20": "correct"
+      },
+      "summary": {
+        "all": {
+          "correct": 19,
+          "refusal": 0,
+          "incorrect": 1,
+          "total": 20
+        },
+        "important": {
+          "correct": 14,
+          "refusal": 0,
+          "incorrect": 1,
+          "total": 15
+        },
+        "incidental": {
+          "correct": 5,
+          "refusal": 0,
+          "incorrect": 0,
+          "total": 5
+        }
+      }
+    },
+    "B": {
+      "tokens": 2055,
+      "chars": 7192,
+      "answers": {
+        "1": "Иван",
+        "2": "backend developer",
+        "3": "Python",
+        "4": "ORM (магия), Alembic",
+        "5": "Создать простой веб-трекер расходов для одного человека и довести до MVP за 2 месяца",
+        "6": "SQLite",
+        "7": "Docker + Fly.io для MVP, минимальные расходы",
+        "8": "Один пароль из env, подписанная cookie, без регистрации и сессий на сервере",
+        "9": "Экспорт в CSV — во вторую волну после MVP",
+        "10": "python:3.12-slim",
+        "11": "Проектирование схемы БД (суммы, валюты, даты), миграции (таблица schema_version, скрипт применения, формат файлов)",
+        "12": "Реализация Docker и CI",
+        "13": "Реализовать middleware авторизации, хэширование пароля, настройку логирования",
+        "14": "Теминг (CSS-переменные, переключатель темы), favicon и метатеги",
+        "15": "Добавить индекс по date и составной по (category_id, date) в expenses",
+        "16": "Да, кот спит на клавиатуре",
+        "17": "не знаю",
+        "18": "не знаю",
+        "19": "не знаю",
+        "20": "Собирал модели самолётов"
+      },
+      "verdicts": {
+        "1": "correct",
+        "2": "correct",
+        "3": "correct",
+        "4": "correct",
+        "5": "correct",
+        "6": "correct",
+        "7": "correct",
+        "8": "correct",
+        "9": "correct",
+        "10": "correct",
+        "11": "correct",
+        "12": "correct",
+        "13": "correct",
+        "14": "incorrect",
+        "15": "correct",
+        "16": "incorrect",
+        "17": "refusal",
+        "18": "refusal",
+        "19": "refusal",
+        "20": "correct"
+      },
+      "summary": {
+        "all": {
+          "correct": 15,
+          "refusal": 3,
+          "incorrect": 2,
+          "total": 20
+        },
+        "important": {
+          "correct": 14,
+          "refusal": 0,
+          "incorrect": 1,
+          "total": 15
+        },
+        "incidental": {
+          "correct": 1,
+          "refusal": 3,
+          "incorrect": 1,
+          "total": 5
+        }
+      }
+    },
+    "C": {
+      "tokens": 2477,
+      "chars": 8668,
+      "answers": {
+        "1": "Иван",
+        "2": "backend developer",
+        "3": "Python",
+        "4": "ORM (магия), Alembic",
+        "5": "Создать простой веб-трекер расходов для одного человека и выпустить MVP за 2 месяца",
+        "6": "SQLite (стандартная библиотека sqlite3)",
+        "7": "Docker + Fly.io для MVP",
+        "8": "Один пользователь, декоратор для проверки cookie, пароль в переменной окружения с хэшированием",
+        "9": "Экспорт в CSV — во вторую волну после MVP",
+        "10": "python:3.12-slim",
+        "11": "Проектирование схемы БД (суммы, валюты, даты) и добавление индексов по дате в expenses",
+        "12": "Настроить CI: GitHub Actions, один job (зависимости, pytest, линтер)",
+        "13": "Реализовать middleware авторизации (проверка cookie) и хэширование пароля при логине",
+        "14": "Теминг через CSS-переменные (светлая/тёмная), favicon и базовые метатеги",
+        "15": "Добавить индекс по date и составной по (category_id, date) в expenses",
+        "16": "Да, кот спит на клавиатуре (автосохранение — обязательная фича)",
+        "17": "не знаю",
+        "18": "не знаю",
+        "19": "не знаю",
+        "20": "Собирал модели самолётов"
+      },
+      "verdicts": {
+        "1": "correct",
+        "2": "correct",
+        "3": "correct",
+        "4": "correct",
+        "5": "correct",
+        "6": "correct",
+        "7": "correct",
+        "8": "correct",
+        "9": "correct",
+        "10": "correct",
+        "11": "correct",
+        "12": "correct",
+        "13": "correct",
+        "14": "correct",
+        "15": "correct",
+        "16": "incorrect",
+        "17": "refusal",
+        "18": "refusal",
+        "19": "refusal",
+        "20": "correct"
+      },
+      "summary": {
+        "all": {
+          "correct": 16,
+          "refusal": 3,
+          "incorrect": 1,
+          "total": 20
+        },
+        "important": {
+          "correct": 15,
+          "refusal": 0,
+          "incorrect": 0,
+          "total": 15
+        },
+        "incidental": {
+          "correct": 1,
+          "refusal": 3,
+          "incorrect": 1,
+          "total": 5
+        }
+      }
+    }
+  }
+}

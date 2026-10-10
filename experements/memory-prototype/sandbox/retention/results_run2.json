@@ -1,0 +1,210 @@
+{
+  "run": 2,
+  "compressions": 19,
+  "modes": {
+    "A": {
+      "tokens": 2589,
+      "chars": 9061,
+      "answers": {
+        "1": "Иван",
+        "2": "бэкенд-разработчик",
+        "3": "Python",
+        "4": "ORM из-за магии",
+        "5": "выпустить MVP за два месяца",
+        "6": "SQLite",
+        "7": "Docker + Fly.io",
+        "8": "один пароль из env плюс подписанная cookie",
+        "9": "CSV-экспорт во вторую волну (после MVP)",
+        "10": "python:3.12-slim",
+        "11": "добавить индексы по дате в expenses",
+        "12": "настроить CI через GitHub Actions",
+        "13": "написать middleware для авторизации (проверка cookie на защищённых роутах)",
+        "14": "продумать тёмную тему интерфейса",
+        "15": "добавить индексы по дате в expenses",
+        "16": "да, кот Персик вечно спит на клавиатуре",
+        "17": "сериал про космос",
+        "18": "Эфиопия",
+        "19": "механическая клавиатура",
+        "20": "собирал модели самолётов"
+      },
+      "verdicts": {
+        "1": "correct",
+        "2": "correct",
+        "3": "correct",
+        "4": "correct",
+        "5": "correct",
+        "6": "correct",
+        "7": "correct",
+        "8": "correct",
+        "9": "correct",
+        "10": "correct",
+        "11": "incorrect",
+        "12": "correct",
+        "13": "correct",
+        "14": "correct",
+        "15": "correct",
+        "16": "correct",
+        "17": "correct",
+        "18": "correct",
+        "19": "correct",
+        "20": "correct"
+      },
+      "summary": {
+        "all": {
+          "correct": 19,
+          "refusal": 0,
+          "incorrect": 1,
+          "total": 20
+        },
+        "important": {
+          "correct": 14,
+          "refusal": 0,
+          "incorrect": 1,
+          "total": 15
+        },
+        "incidental": {
+          "correct": 5,
+          "refusal": 0,
+          "incorrect": 0,
+          "total": 5
+        }
+      }
+    },
+    "B": {
+      "tokens": 1726,
+      "chars": 6042,
+      "answers": {
+        "1": "Иван",
+        "2": "backend developer",
+        "3": "не знаю",
+        "4": "ORM",
+        "5": "Build a personal expense tracker web app, Release MVP in 2 months",
+        "6": "SQLite",
+        "7": "Deployment: Docker + Fly.io for MVP; no custom domains; Fly.io subdomain sufficient",
+        "8": "Single password from env var + signed cookie (no server sessions); no registration, single user",
+        "9": "CSV export moved to post-MVP (second wave)",
+        "10": "python:3.12-slim",
+        "11": "Design table schema (amounts, currencies, dates)",
+        "12": "CI/CD with GitHub Actions (tests on push)",
+        "13": "Write auth middleware decorator for protected routes",
+        "14": "UI/UX requirements",
+        "15": "Добавить индексы по дате в expenses (индекс по date и составной по (category_id, date))",
+        "16": "не знаю",
+        "17": "не знаю",
+        "18": "не знаю",
+        "19": "не знаю",
+        "20": "В детстве собирал модели самолётов"
+      },
+      "verdicts": {
+        "1": "correct",
+        "2": "correct",
+        "3": "refusal",
+        "4": "correct",
+        "5": "correct",
+        "6": "correct",
+        "7": "correct",
+        "8": "correct",
+        "9": "correct",
+        "10": "correct",
+        "11": "correct",
+        "12": "correct",
+        "13": "correct",
+        "14": "incorrect",
+        "15": "correct",
+        "16": "refusal",
+        "17": "refusal",
+        "18": "refusal",
+        "19": "refusal",
+        "20": "correct"
+      },
+      "summary": {
+        "all": {
+          "correct": 14,
+          "refusal": 5,
+          "incorrect": 1,
+          "total": 20
+        },
+        "important": {
+          "correct": 13,
+          "refusal": 1,
+          "incorrect": 1,
+          "total": 15
+        },
+        "incidental": {
+          "correct": 1,
+          "refusal": 4,
+          "incorrect": 0,
+          "total": 5
+        }
+      }
+    },
+    "C": {
+      "tokens": 2148,
+      "chars": 7518,
+      "answers": {
+        "1": "Иван",
+        "2": "backend developer",
+        "3": "не знаю",
+        "4": "ORM",
+        "5": "выпустить MVP за два месяца",
+        "6": "SQLite",
+        "7": "Docker + Fly.io, поддомен Fly.io",
+        "8": "Один пароль из env + подписанная кука, без сессий, без регистрации",
+        "9": "CSV-экспорт — после MVP (вторая волна)",
+        "10": "python:3.12-slim",
+        "11": "Design table schema (amounts, currencies, dates)",
+        "12": "CI/CD with GitHub Actions (tests on push)",
+        "13": "Write auth middleware decorator for protected routes",
+        "14": "UI/UX requirements",
+        "15": "Добавить индексы по дате в expenses",
+        "16": "не знаю",
+        "17": "не знаю",
+        "18": "не знаю",
+        "19": "не знаю",
+        "20": "Собирал модели самолётов"
+      },
+      "verdicts": {
+        "1": "correct",
+        "2": "correct",
+        "3": "refusal",
+        "4": "correct",
+        "5": "correct",
+        "6": "correct",
+        "7": "correct",
+        "8": "correct",
+        "9": "correct",
+        "10": "correct",
+        "11": "correct",
+        "12": "correct",
+        "13": "correct",
+        "14": "incorrect",
+        "15": "correct",
+        "16": "refusal",
+        "17": "refusal",
+        "18": "refusal",
+        "19": "refusal",
+        "20": "correct"
+      },
+      "summary": {
+        "all": {
+          "correct": 14,
+          "refusal": 5,
+          "incorrect": 1,
+          "total": 20
+        },
+        "important": {
+          "correct": 13,
+          "refusal": 1,
+          "incorrect": 1,
+          "total": 15
+        },
+        "incidental": {
+          "correct": 1,
+          "refusal": 4,
+          "incorrect": 0,
+          "total": 5
+        }
+      }
+    }
+  }
+}

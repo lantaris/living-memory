@@ -1,0 +1,25 @@
+{
+  "user": {
+    "name": "Иван",
+    "role": "backend developer",
+    "style": null
+  },
+  "preferences": {
+    "likes": [
+      "Python"
+    ],
+    "dislikes": [
+      "ORM"
+    ]
+  },
+  "goals": [
+    "create personal expense tracker web app",
+    "release MVP within 2 months",
+    "create personal expense tracker web app named 'Копилка'"
+  ],
+  "meta": {
+    "version": 1,
+    "updated_at": "2026-10-10T02:54:45+00:00",
+    "compressions": 19
+  }
+}

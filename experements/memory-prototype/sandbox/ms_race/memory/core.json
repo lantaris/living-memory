@@ -1,0 +1,17 @@
+{
+  "user": {
+    "name": null,
+    "role": null,
+    "style": null
+  },
+  "preferences": {
+    "likes": [],
+    "dislikes": []
+  },
+  "goals": [],
+  "meta": {
+    "version": 1,
+    "updated_at": "2026-10-10T04:34:12+00:00",
+    "compressions": 1
+  }
+}

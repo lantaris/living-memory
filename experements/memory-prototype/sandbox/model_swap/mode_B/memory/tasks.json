@@ -1,0 +1,30 @@
+[
+  {
+    "topic": "выбор хранилища",
+    "status": "in-progress",
+    "resolved": "беру SQLite",
+    "open": "схема таблиц и миграции",
+    "updated_at": "2026-10-10T00:46:17+00:00"
+  },
+  {
+    "topic": "деплой",
+    "status": "open",
+    "resolved": null,
+    "open": null,
+    "updated_at": "2026-10-10T00:46:35+00:00"
+  },
+  {
+    "topic": "общее",
+    "status": "in-progress",
+    "resolved": "Docker + Fly.io",
+    "open": "Dockerfile и CI; написать многостадийный Dockerfile с кэшированием зависимостей и настроить GitHub Actions для автодеплоя",
+    "updated_at": "2026-10-10T00:46:44+00:00"
+  },
+  {
+    "topic": "авторизация",
+    "status": "in-progress",
+    "resolved": "пароль из env",
+    "open": "middleware",
+    "updated_at": "2026-10-10T00:46:44+00:00"
+  }
+]

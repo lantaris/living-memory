@@ -1,0 +1,158 @@
+#!/usr/bin/env python3
+"""
+Context injection module.
+Builds the system prompt for LLM from memory layers.
+"""
+
+import json
+import os
+from typing import Dict, Any, List
+
+MEMORY_DIR = os.path.join(os.path.dirname(__file__), "memory")
+CORE_PATH = os.path.join(MEMORY_DIR, "core.json")
+TASKS_PATH = os.path.join(MEMORY_DIR, "tasks.json")
+RECENT_PATH = os.path.join(MEMORY_DIR, "recent.jsonl")
+
+
+def load_json(path: str, default: Any) -> Any:
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return default
+
+
+def load_recent() -> List[Dict[str, str]]:
+    messages = []
+    try:
+        with open(RECENT_PATH, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    messages.append(json.loads(line))
+    except FileNotFoundError:
+        pass
+    return messages
+
+
+def build_system_prompt() -> str:
+    """Build the system prompt with all three memory layers."""
+    core = load_json(CORE_PATH, {})
+    tasks = load_json(TASKS_PATH, [])
+    recent = load_recent()
+    
+    parts = []
+    
+    parts.append("ТЫ — ИИ С ПАМЯТЬЮ. Используй контекст ниже для ответа.")
+    parts.append("")
+    
+    parts.append("=== ЯДРО (постоянная модель пользователя) ===")
+    if core:
+        user = core.get("user", {})
+        prefs = core.get("preferences", {})
+        goals = core.get("goals", [])
+        
+        if user.get("name"):
+            parts.append(f"Имя: {user['name']}")
+        if user.get("role"):
+            parts.append(f"Роль: {user['role']}")
+        
+        if prefs.get("likes"):
+            parts.append(f"Любит: {', '.join(prefs['likes'])}")
+        if prefs.get("dislikes"):
+            parts.append(f"Не любит: {', '.join(prefs['dislikes'])}")
+        
+        if goals:
+            parts.append(f"Цели: {', '.join(goals)}")
+    parts.append("")
+    
+    parts.append("=== ЗАДАЧИ (открытые темы и решения) ===")
+    if tasks:
+        for task in tasks:
+            parts.append(f"Тема: {task.get('topic', 'unknown')} [{task.get('status', 'open')}]")
+            if task.get("resolved"):
+                parts.append(f"  Решено: {', '.join(task['resolved'])}")
+            if task.get("open"):
+                parts.append(f"  Открыто: {', '.join(task['open'])}")
+    else:
+        parts.append("(нет активных задач)")
+    parts.append("")
+    
+    parts.append("=== ПОСЛЕДНИЕ СООБЩЕНИЯ (оперативка) ===")
+    if recent:
+        for msg in recent:
+            role = "Пользователь" if msg.get("role") == "user" else "ИИ"
+            parts.append(f"{role}: {msg.get('content', '')}")
+    else:
+        parts.append("(пусто)")
+    
+    return "\n".join(parts)
+
+
+def build_minimal_prompt() -> str:
+    """Build a minimal prompt with only core + recent (no tasks)."""
+    core = load_json(CORE_PATH, {})
+    recent = load_recent()
+    
+    parts = ["ТЫ — ИИ С ПАМЯТЬЮ. Используй контекст ниже для ответа.", ""]
+    
+    parts.append("=== ЯДРО ===")
+    if core:
+        user = core.get("user", {})
+        prefs = core.get("preferences", {})
+        goals = core.get("goals", [])
+        
+        if user.get("name"):
+            parts.append(f"Имя: {user['name']}")
+        if user.get("role"):
+            parts.append(f"Роль: {user['role']}")
+        if prefs.get("likes"):
+            parts.append(f"Любит: {', '.join(prefs['likes'])}")
+        if prefs.get("dislikes"):
+            parts.append(f"Не любит: {', '.join(prefs['dislikes'])}")
+        if goals:
+            parts.append(f"Цели: {', '.join(goals)}")
+    
+    parts.append("")
+    parts.append("=== ПОСЛЕДНИЕ СООБЩЕНИЯ ===")
+    for msg in recent[-5:]:
+        role = "Пользователь" if msg.get("role") == "user" else "ИИ"
+        parts.append(f"{role}: {msg.get('content', '')}")
+    
+    return "\n".join(parts)
+
+
+def get_memory_stats() -> Dict[str, Any]:
+    """Get statistics about memory usage."""
+    core = load_json(CORE_PATH, {})
+    tasks = load_json(TASKS_PATH, [])
+    recent = load_recent()
+    
+    return {
+        "core": {
+            "likes_count": len(core.get("preferences", {}).get("likes", [])),
+            "dislikes_count": len(core.get("preferences", {}).get("dislikes", [])),
+            "goals_count": len(core.get("goals", [])),
+            "compressions": core.get("meta", {}).get("compressions", 0)
+        },
+        "tasks": {
+            "total": len(tasks),
+            "open": sum(1 for t in tasks if t.get("status") == "open"),
+            "in_progress": sum(1 for t in tasks if t.get("status") == "in-progress"),
+            "done": sum(1 for t in tasks if t.get("status") == "done")
+        },
+        "recent": {
+            "count": len(recent),
+            "max": 10
+        }
+    }
+
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "minimal":
+        print(build_minimal_prompt())
+    elif len(sys.argv) > 1 and sys.argv[1] == "stats":
+        print(json.dumps(get_memory_stats(), ensure_ascii=False, indent=2))
+    else:
+        print(build_system_prompt())

@@ -1,0 +1,2 @@
+{"ts": 1791596230.414145, "role": "patch", "text": "resolved (выбор базы данных для трекера): SQLite chosen: simple file, no server needed, easy backups via file copy, convenient local testing, no Docker or network dependencies", "reason": "patch:truncated:resolved(120)", "indexed": false}
+{"ts": 1791596253.244201, "role": "user", "text": "Кстати, у меня есть кот Барсик — тоже любит спать на ноутбуке.", "reason": "not_used_by_compression", "indexed": true}

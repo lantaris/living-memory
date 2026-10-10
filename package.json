@@ -1,0 +1,45 @@
+{
+  "name": "living-memory",
+  "version": "0.3.0",
+  "description": "Layered living memory for coding agents: OpenCode plugin + Hermes memory provider over one bundled Python engine. Per-session tails, LLM compression, loss log, pending queue and a search tool.",
+  "type": "module",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/src/index.js",
+      "types": "./dist/src/index.d.ts"
+    }
+  },
+  "files": [
+    "dist/src",
+    "python",
+    "skills",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
+    "test": "npm run build && node --test \"dist/tests/**/*.test.js\""
+  },
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "memory",
+    "llm",
+    "compression"
+  ],
+  "license": "MIT",
+  "author": "lantaris <edik.ponomarenko@mail.ru>",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@opencode-ai/plugin": "^1.18.35"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  }
+}

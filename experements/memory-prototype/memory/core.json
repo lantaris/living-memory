@@ -1,0 +1,26 @@
+{
+  "user": {
+    "name": "Иван",
+    "role": "бэкенд-разработчик",
+    "style": null
+  },
+  "preferences": {
+    "likes": [
+      "Python",
+      "тёмную тему в интерфейсах"
+    ],
+    "dislikes": [
+      "Java",
+      "ORM из-за магии"
+    ]
+  },
+  "goals": [
+    "выпустить MVP за два месяца",
+    "open-source, выложить на GitHub под MIT"
+  ],
+  "meta": {
+    "version": 1,
+    "updated_at": "2026-10-10T04:34:12+00:00",
+    "compressions": 11
+  }
+}

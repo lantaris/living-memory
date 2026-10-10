@@ -1,0 +1,35 @@
+[
+  {
+    "topic": "выбор хранилища",
+    "status": "in-progress",
+    "resolved": [
+      "беру SQLite"
+    ],
+    "open": [
+      "продумать схему таблиц расходов и миграции"
+    ],
+    "updated_at": "2026-10-10T04:34:12+00:00"
+  },
+  {
+    "topic": "деплой",
+    "status": "in-progress",
+    "resolved": [
+      "Docker + Fly.io"
+    ],
+    "open": [
+      "написать Dockerfile и настроить CI через GitHub Actions"
+    ],
+    "updated_at": "2026-10-10T04:34:12+00:00"
+  },
+  {
+    "topic": "авторизация",
+    "status": "in-progress",
+    "resolved": [
+      "один пароль из env плюс подписанная cookie"
+    ],
+    "open": [
+      "генерация секретного ключа и middleware"
+    ],
+    "updated_at": "2026-10-10T04:34:12+00:00"
+  }
+]

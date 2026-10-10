@@ -1,0 +1,13 @@
+[
+  {
+    "topic": "настройка",
+    "status": "in-progress",
+    "resolved": [
+      "прошивка на Rust"
+    ],
+    "open": null,
+    "session_id": "fw",
+    "session_label": "Firmware",
+    "updated_at": "2026-10-10T04:34:12+00:00"
+  }
+]

@@ -1,0 +1,10 @@
+{"ts": 1791600365.430111, "role": "patch", "text": "core.meta: {\"version\": 2, \"updated_at\": \"2026-10-10T02:45:10+00:00\", \"compressions\": 2}", "reason": "patch:rejected:unknown_key", "indexed": false}
+{"ts": 1791600365.4305742, "role": "user", "text": "Думаю про структуру: расходы, категории, даты. Что посоветуешь?", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791600458.248645, "role": "patch", "text": "core.meta: {\"version\": 2, \"updated_at\": \"2026-10-10T02:47:06+00:00\", \"compressions\": 4}", "reason": "patch:rejected:unknown_key", "indexed": false}
+{"ts": 1791600458.249495, "role": "user", "text": "Слушай, отвлекусь: у меня дома живёт кот Персик — вечно спит на клавиатуре.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791600508.463016, "role": "user", "text": "Да, CRUD я делал много раз. Интересна именно память проекта — как не потерять контекст.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791600617.266277, "role": "patch", "text": "user.style: None", "reason": "patch:rejected:style_is_meta", "indexed": false}
+{"ts": 1791600617.26653, "role": "patch", "text": "core.meta: {\"version\": 1, \"updated_at\": \"2026-10-10T02:49:12+00:00\", \"compressions\": 8}", "reason": "patch:rejected:unknown_key", "indexed": false}
+{"ts": 1791600617.272774, "role": "user", "text": "Вчера досмотрел сериал про космос — затянуло, до трёх ночи смотрел.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791600745.653023, "role": "user", "text": "Кстати, пробовал на днях кофе из Эфиопии — очень необычный вкус, ягодный.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791600828.374996, "role": "user", "text": "Кстати, купил механическую клавиатуру — печатать стало заметно приятнее.", "reason": "not_used_by_compression", "indexed": true}

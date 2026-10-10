@@ -1,0 +1,210 @@
+{
+  "run": 1,
+  "compressions": 19,
+  "modes": {
+    "A": {
+      "tokens": 2569,
+      "chars": 8992,
+      "answers": {
+        "1": "Иван",
+        "2": "бэкенд-разработчик",
+        "3": "Python",
+        "4": "ORM",
+        "5": "выпустить MVP за два месяца",
+        "6": "SQLite",
+        "7": "Docker + Fly.io",
+        "8": "один пароль из env + подписанная cookie",
+        "9": "экспорт в CSV во вторую волну (после MVP)",
+        "10": "python:3.12-slim",
+        "11": "добавить индексы по дате в expenses",
+        "12": "настроить CI через GitHub Actions",
+        "13": "написать middleware для авторизации (проверка cookie)",
+        "14": "продумать тёмную тему",
+        "15": "добавить индексы по дате в expenses",
+        "16": "да, кот Персик спит на клавиатуре",
+        "17": "про космос",
+        "18": "из Эфиопии",
+        "19": "механическую клавиатуру",
+        "20": "собирал модели самолётов"
+      },
+      "verdicts": {
+        "1": "correct",
+        "2": "correct",
+        "3": "correct",
+        "4": "correct",
+        "5": "correct",
+        "6": "correct",
+        "7": "correct",
+        "8": "correct",
+        "9": "correct",
+        "10": "correct",
+        "11": "incorrect",
+        "12": "correct",
+        "13": "correct",
+        "14": "correct",
+        "15": "correct",
+        "16": "correct",
+        "17": "correct",
+        "18": "correct",
+        "19": "correct",
+        "20": "correct"
+      },
+      "summary": {
+        "all": {
+          "correct": 19,
+          "refusal": 0,
+          "incorrect": 1,
+          "total": 20
+        },
+        "important": {
+          "correct": 14,
+          "refusal": 0,
+          "incorrect": 1,
+          "total": 15
+        },
+        "incidental": {
+          "correct": 5,
+          "refusal": 0,
+          "incorrect": 0,
+          "total": 5
+        }
+      }
+    },
+    "B": {
+      "tokens": 864,
+      "chars": 3023,
+      "answers": {
+        "1": "Имя: Иван",
+        "2": "Профессия: backend developer",
+        "3": "Люблю: Python",
+        "4": "Не люблю: ORM, Alembic, hardcoded secrets in code",
+        "5": "Цели: Создать простой веб-трекер расходов для одного человека; Выпустить MVP личного трекера расходов за два месяца",
+        "6": "Хранилище: sqlite3",
+        "7": "Хостинг: Fly.io",
+        "8": "Авторизация: single (одна учётная запись)",
+        "9": "Экспорт: CSV экспорт",
+        "10": "не знаю",
+        "11": "подкатегории",
+        "12": "CI GitHub",
+        "13": "не знаю",
+        "14": "favicon; метатеги",
+        "15": "добавить индексы по дате в expenses",
+        "16": "не знаю",
+        "17": "не знаю",
+        "18": "не знаю",
+        "19": "не знаю",
+        "20": "В детстве собирал модели самолётов"
+      },
+      "verdicts": {
+        "1": "correct",
+        "2": "correct",
+        "3": "correct",
+        "4": "correct",
+        "5": "correct",
+        "6": "correct",
+        "7": "correct",
+        "8": "incorrect",
+        "9": "correct",
+        "10": "refusal",
+        "11": "incorrect",
+        "12": "correct",
+        "13": "refusal",
+        "14": "incorrect",
+        "15": "correct",
+        "16": "refusal",
+        "17": "refusal",
+        "18": "refusal",
+        "19": "refusal",
+        "20": "correct"
+      },
+      "summary": {
+        "all": {
+          "correct": 11,
+          "refusal": 6,
+          "incorrect": 3,
+          "total": 20
+        },
+        "important": {
+          "correct": 10,
+          "refusal": 2,
+          "incorrect": 3,
+          "total": 15
+        },
+        "incidental": {
+          "correct": 1,
+          "refusal": 4,
+          "incorrect": 0,
+          "total": 5
+        }
+      }
+    },
+    "C": {
+      "tokens": 1285,
+      "chars": 4499,
+      "answers": {
+        "1": "Иван",
+        "2": "backend developer",
+        "3": "Python",
+        "4": "ORM, Alembic, hardcoded secrets in code",
+        "5": "Создать простой веб-трекер расходов для одного человека и выпустить MVP за два месяца",
+        "6": "sqlite3",
+        "7": "Хостинг: Fly.io",
+        "8": "Авторизация: single (одна учётная запись)",
+        "9": "Экспорт в CSV — во вторую волну после MVP-схемы",
+        "10": "не знаю",
+        "11": "Подкатегории",
+        "12": "CI GitHub",
+        "13": "не знаю",
+        "14": "Favicon, метатеги",
+        "15": "Добавить индексы по дате в expenses (индекс по date и составной по category_id, date)",
+        "16": "не знаю",
+        "17": "не знаю",
+        "18": "не знаю",
+        "19": "не знаю",
+        "20": "Собирал модели самолётов"
+      },
+      "verdicts": {
+        "1": "correct",
+        "2": "correct",
+        "3": "correct",
+        "4": "correct",
+        "5": "correct",
+        "6": "correct",
+        "7": "correct",
+        "8": "incorrect",
+        "9": "correct",
+        "10": "refusal",
+        "11": "incorrect",
+        "12": "correct",
+        "13": "refusal",
+        "14": "incorrect",
+        "15": "correct",
+        "16": "refusal",
+        "17": "refusal",
+        "18": "refusal",
+        "19": "refusal",
+        "20": "correct"
+      },
+      "summary": {
+        "all": {
+          "correct": 11,
+          "refusal": 6,
+          "incorrect": 3,
+          "total": 20
+        },
+        "important": {
+          "correct": 10,
+          "refusal": 2,
+          "incorrect": 3,
+          "total": 15
+        },
+        "incidental": {
+          "correct": 1,
+          "refusal": 4,
+          "incorrect": 0,
+          "total": 5
+        }
+      }
+    }
+  }
+}

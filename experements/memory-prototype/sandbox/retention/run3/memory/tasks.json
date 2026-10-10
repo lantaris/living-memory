@@ -1,0 +1,92 @@
+[
+  {
+    "topic": "expense tracker planning",
+    "status": "in-progress",
+    "resolved": [
+      "Web app for single user",
+      "Categories: food, transport, housing, entertainment",
+      "Database: SQLite (chosen over Postgres for single-user simplicity)",
+      "Data model: expenses table (amount, date, category, note) + categories table",
+      "Connector: standard library sqlite3",
+      "Free local development, minimal hosting cost",
+      "Data model: expenses(id, amount, currency, category_id, date, note) + categories(id, name, icon)",
+      "Currency: only RUB for now, field kept for future (YAGNI)",
+      "Auto-save feature required (cat on keyboard risk)",
+      "Index on expenses.date for monthly summaries",
+      "API: JSON over /api/expenses",
+      "Docker: python:3.12-slim base image",
+      "Database in Docker volume at /data with env variable path",
+      "CI: GitHub Actions chosen for CI/CD",
+      "CI: single job (deps install, pytest, linter), no deploy/CD yet",
+      "Test plan: CRUD tests for expenses + calculation tests (monthly sum, category distribution)",
+      "Tech stack: Python (acknowledged as overkill for simple tracker)",
+      "Monthly expense chart/report feature requested",
+      "Backend: monthly aggregates for chart data",
+      "Frontend: chart library for visualization (to be chosen)",
+      "Business logic in separate core module: pure functions over DB, no web or CLI",
+      "No ORM — raw SQL queries via sqlite3",
+      "Manual migrations: SQL files + schema_version table with apply script",
+      "UI themes: CSS variables with token system for light/dark themes, no toggle needed for MVP",
+      "Basic meta tags and favicon needed for browser tabs",
+      "Documentation: README with launch instructions and DB schema table",
+      "Project name: Копилка",
+      "Domain: Fly.io subdomain (no custom domain needed)",
+      "CSV export postponed to post-MVP (second wave)"
+    ],
+    "open": [
+      "Choose tech stack",
+      "Define data model",
+      "Plan UI/UX",
+      "Set up project structure",
+      "Design table schema: amounts, currencies, dates",
+      "Consider subcategories for future evolution",
+      "Set up CI via GitHub Actions — tests on every push",
+      "Implement monthly aggregation endpoint",
+      "Choose frontend chart library",
+      "Implement CLI version as bonus feature"
+    ],
+    "updated_at": "2026-10-10T03:14:24+00:00"
+  },
+  {
+    "topic": "deployment",
+    "status": "in-progress",
+    "resolved": [
+      "Deployment: Docker + Fly.io for MVP",
+      "Config via env vars: DATABASE_PATH, SECRET_KEY",
+      "Health check endpoint at /healthz checking DB connection",
+      "Zero-downtime not required for MVP; rolling updates later"
+    ],
+    "open": [
+      "Add .env.example to prevent committing secrets",
+      "Implement healthcheck endpoint for Fly.io",
+      "Implement backup strategy"
+    ],
+    "updated_at": "2026-10-10T03:13:49+00:00"
+  },
+  {
+    "topic": "auth",
+    "status": "in-progress",
+    "resolved": [
+      "Single user, no role-based auth needed",
+      "Password stored as hash in environment variable, verified on login",
+      "Auth middleware: single decorator for cookie validation on protected routes"
+    ],
+    "open": [
+      "Implement cookie-based auth middleware decorator",
+      "Add login endpoint with password hash verification"
+    ],
+    "updated_at": "2026-10-10T03:13:49+00:00"
+  },
+  {
+    "topic": "logging",
+    "status": "in-progress",
+    "resolved": [
+      "Standard logging with levels; file rotation in production"
+    ],
+    "open": [
+      "Add structured logging to understand crashes",
+      "Choose logging library/approach"
+    ],
+    "updated_at": "2026-10-10T03:13:49+00:00"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "topic": "настройка",
+    "status": "in-progress",
+    "resolved": [
+      "приложение на TypeScript"
+    ],
+    "open": null,
+    "session_id": "app",
+    "session_label": "App",
+    "updated_at": "2026-10-10T04:34:12+00:00"
+  },
+  {
+    "topic": "настройка",
+    "status": "in-progress",
+    "resolved": [
+      "прошивка на Rust"
+    ],
+    "open": null,
+    "session_id": "fw",
+    "session_label": "Firmware",
+    "updated_at": "2026-10-10T04:34:12+00:00"
+  }
+]

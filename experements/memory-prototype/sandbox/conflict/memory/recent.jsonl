@@ -1,0 +1,5 @@
+{"id": "1e51d4399338", "role": "user", "content": "Ещё подумай про обработку ошибок в rusqlite.", "ts": 1791606852.907386}
+{"id": "c80fa1063cad", "role": "assistant", "content": "Оборачивай в Result и логируй через env_logger.", "ts": 1791606852.910818}
+{"id": "6bda58a151ed", "role": "user", "content": "Ок. Обновлять ли Docker-образ под Rust?", "ts": 1791606852.9129071}
+{"id": "d07b518e6220", "role": "assistant", "content": "Да: rust:1.79-slim как builder, distroless для рантайма.", "ts": 1791606852.9142458}
+{"id": "e38a05d53980", "role": "user", "content": "В целом план не меняется, меняется только стек.", "ts": 1791606852.915721}

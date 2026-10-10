@@ -1,0 +1,149 @@
+#!/usr/bin/env python3
+"""
+Test scenario for memory prototype.
+Simulates 20 messages with compression every 5 messages.
+"""
+
+import sys
+import os
+sys.path.insert(0, os.path.dirname(__file__))
+
+from compress import add_message, compress, load_json, search_index
+from inject import build_system_prompt, get_memory_stats
+
+CORE_PATH = os.path.join(os.path.dirname(__file__), "memory", "core.json")
+TASKS_PATH = os.path.join(os.path.dirname(__file__), "memory", "tasks.json")
+RECENT_PATH = os.path.join(os.path.dirname(__file__), "memory", "recent.jsonl")
+
+
+def reset_memory():
+    """Reset all memory files to initial state."""
+    import json
+    core_initial = {
+        "user": {"name": None, "role": None},
+        "preferences": {"likes": [], "dislikes": []},
+        "goals": [],
+        "meta": {"version": 1, "updated_at": None, "compressions": 0}
+    }
+    with open(CORE_PATH, "w", encoding="utf-8") as f:
+        json.dump(core_initial, f, ensure_ascii=False, indent=2)
+    with open(TASKS_PATH, "w", encoding="utf-8") as f:
+        json.dump([], f, ensure_ascii=False, indent=2)
+    with open(RECENT_PATH, "w", encoding="utf-8") as f:
+        pass
+    
+    import sqlite3
+    conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), "memory", "index.db"))
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM messages")
+    conn.commit()
+    conn.close()
+
+
+def print_memory_state(step: str):
+    """Print current memory state."""
+    print(f"\n{'='*60}")
+    print(f"Шаг: {step}")
+    print(f"{'='*60}")
+    
+    core = load_json(CORE_PATH, {})
+    tasks = load_json(TASKS_PATH, [])
+    
+    print("\n--- ЯДРО ---")
+    print(json.dumps(core, ensure_ascii=False, indent=2))
+    
+    print("\n--- ЗАДАЧИ ---")
+    print(json.dumps(tasks, ensure_ascii=False, indent=2))
+    
+    stats = get_memory_stats()
+    print(f"\n--- Статистика ---")
+    print(f"Recent: {stats['recent']['count']}/{stats['recent']['max']}")
+    print(f"Compressions: {stats['core']['compressions']}")
+    print(f"Tasks: {stats['tasks']['total']} (open: {stats['tasks']['open']}, done: {stats['tasks']['done']})")
+
+
+def run_test():
+    """Run the full test scenario."""
+    print("Запуск тестового сценария памяти...")
+    
+    reset_memory()
+    
+    test_messages = [
+        ("user", "Привет! Запомни: мой любимый цвет — фиолетовый."),
+        ("assistant", "Понял, запомнил: твой любимый цвет — фиолетовый."),
+        ("user", "Я хочу научиться программировать на Rust."),
+        ("assistant", "Отличная цель! Rust — мощный язык с безопасностью памяти."),
+        ("user", "Мне не нравится когда код работает медленно."),
+        ("assistant", "Заметил: не любишь медленный код. Rust тут хорош."),
+        ("user", "Планирую написать CLI-утилиту для обработки логов."),
+        ("assistant", "CLI для логов — хороший проект для старта на Rust."),
+        ("user", "Также хочу разобраться с async/await в Rust."),
+        ("assistant", "Async в Rust особенный, но очень эффективный."),
+        ("user", "Мой друг рекомендовал использовать tokio."),
+        ("assistant", "Tokio — стандарт де-факто для async в Rust."),
+        ("user", "Не люблю когда документация устаревает."),
+        ("assistant", "Понял: не любишь устаревшую документацию."),
+        ("user", "Цель: выпустить первую версию утилиты за месяц."),
+        ("assistant", "Амбициозно, но реалистично для MVP."),
+        ("user", "Буду использовать clap для парсинга аргументов."),
+        ("assistant", "Clap — отличный выбор для CLI парсинга."),
+        ("user", "Нужно решить: структурированные логи или текстовые?"),
+        ("assistant", "Структурированные (JSON) удобнее для парсинга."),
+        ("user", "Выберу JSON — проще обрабатывать программам."),
+    ]
+    
+    for i, (role, content) in enumerate(test_messages):
+        print(f"\n[{i+1}] {role}: {content[:60]}...")
+        add_message(role, content)
+        
+        if (i + 1) % 5 == 0:
+            print_memory_state(f"После {i+1} сообщений (сжатие)")
+    
+    print_memory_state("Финальное состояние")
+    
+    print("\n" + "="*60)
+    print("ПРОВЕРКИ")
+    print("="*60)
+    
+    core = load_json(CORE_PATH, {})
+    tasks = load_json(TASKS_PATH, [])
+    
+    print("\n1. Факт 'фиолетовый' в ядре?")
+    likes = core.get("preferences", {}).get("likes", [])
+    found = any("фиолетовый" in like.lower() or "purple" in like.lower() for like in likes)
+    print(f"   {'✓ ДА' if found else '✗ НЕТ'} — likes: {likes}")
+    
+    print("\n2. Цель 'Rust' в ядре?")
+    goals = core.get("goals", [])
+    found = any("rust" in goal.lower() for goal in goals)
+    print(f"   {'✓ ДА' if found else '✗ НЕТ'} — goals: {goals}")
+    
+    print("\n3. Неприязнь к медленному коду в ядре?")
+    dislikes = core.get("preferences", {}).get("dislikes", [])
+    found = any("медлен" in d.lower() or "slow" in d.lower() for d in dislikes)
+    print(f"   {'✓ ДА' if found else '✗ НЕТ'} — dislikes: {dislikes}")
+    
+    print("\n4. Задачи созданы?")
+    print(f"   Всего задач: {len(tasks)}")
+    for t in tasks:
+        print(f"   - {t['topic']} [{t['status']}]: resolved={len(t['resolved'])}, open={len(t['open'])}")
+    
+    print("\n5. Оперативка не растёт бесконечно?")
+    recent_count = len(load_json(RECENT_PATH, []))
+    print(f"   Сообщений в recent.jsonl: {recent_count} (макс 10)")
+    print(f"   {'✓ ОК' if recent_count <= 10 else '✗ ПРЕВЫШЕНО'}")
+    
+    print("\n6. Поиск по индексу (SQLite):")
+    results = search_index("фиолетовый", limit=3)
+    print(f"   Найдено записей: {len(results)}")
+    for r in results:
+        print(f"   - [{r['timestamp']}] {r['role']}: {r['content'][:80]}")
+    
+    print("\n7. Контекст для LLM (inject.py):")
+    prompt = build_system_prompt()
+    print(prompt[:2000] + ("..." if len(prompt) > 2000 else ""))
+
+
+if __name__ == "__main__":
+    import json
+    run_test()

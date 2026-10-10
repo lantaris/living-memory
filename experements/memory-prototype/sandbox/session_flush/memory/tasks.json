@@ -1,0 +1,21 @@
+[
+  {
+    "topic": "общее",
+    "status": "in-progress",
+    "resolved": [
+      "по экспорту?",
+      "CSV позже, после базовой схемы"
+    ],
+    "open": null,
+    "updated_at": "2026-10-10T04:34:12+00:00"
+  },
+  {
+    "topic": "деплой",
+    "status": "in-progress",
+    "resolved": [
+      "Docker + Fly.io"
+    ],
+    "open": null,
+    "updated_at": "2026-10-10T04:34:12+00:00"
+  }
+]

@@ -1,0 +1,5 @@
+{"ts": 1791594117.4833422, "role": "user", "text": "Думаю про структуру: расходы, категории, даты. Что посоветуешь?", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594239.782807, "role": "user", "text": "Да, CRUD я делал много раз. Интересна именно память проекта — как не потерять контекст.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594335.955542, "role": "user", "text": "Вчера досмотрел сериал про космос — затянуло, до трёх ночи смотрел.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594434.465893, "role": "user", "text": "Кстати, пробовал на днях кофе из Эфиопии — очень необычный вкус, ягодный.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594434.466178, "role": "user", "text": "Ок, без оверинжиниринга. Что с бэкапами?", "reason": "not_used_by_compression", "indexed": true}

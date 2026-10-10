@@ -1,0 +1,3 @@
+{"ts": 1791606853.044669, "role": "patch", "text": "user.style: мне, пожалуйста, очень коротко и только по делу", "reason": "patch:rejected:style_is_meta", "indexed": false}
+{"ts": 1791606853.0448031, "role": "patch", "text": "resolved: беру SQLite, потому что это простой файл, не нужен сервер, легко делать резервные копии копированием файла, удобно тестировать локально, и всё это без Docker и сетевых зависимостей", "reason": "patch:truncated:resolved(120)", "indexed": false}
+{"ts": 1791606853.054416, "role": "user", "text": "Кстати, у меня есть кот Барсик — тоже любит спать на ноутбуке.", "reason": "not_used_by_compression", "indexed": true}

@@ -1,0 +1,210 @@
+{
+  "run": 3,
+  "compressions": 19,
+  "modes": {
+    "A": {
+      "tokens": 2536,
+      "chars": 8876,
+      "answers": {
+        "1": "Иван",
+        "2": "бэкенд-разработчик",
+        "3": "Python",
+        "4": "ORM",
+        "5": "выпустить MVP за два месяца",
+        "6": "SQLite",
+        "7": "Docker + Fly.io",
+        "8": "один пароль из env плюс подписанная cookie",
+        "9": "после MVP-схемы — во вторую волну",
+        "10": "python:3.12-slim",
+        "11": "индексы по дате в expenses",
+        "12": "настроить CI через GitHub Actions",
+        "13": "middleware для авторизации",
+        "14": "тёмная тема, favicon, метатеги",
+        "15": "индексы по дате в expenses",
+        "16": "кот Персик",
+        "17": "про космос",
+        "18": "Эфиопия",
+        "19": "механическая клавиатура",
+        "20": "модели самолётов"
+      },
+      "verdicts": {
+        "1": "correct",
+        "2": "correct",
+        "3": "correct",
+        "4": "correct",
+        "5": "correct",
+        "6": "correct",
+        "7": "correct",
+        "8": "correct",
+        "9": "correct",
+        "10": "correct",
+        "11": "incorrect",
+        "12": "correct",
+        "13": "correct",
+        "14": "correct",
+        "15": "correct",
+        "16": "correct",
+        "17": "correct",
+        "18": "correct",
+        "19": "correct",
+        "20": "correct"
+      },
+      "summary": {
+        "all": {
+          "correct": 19,
+          "refusal": 0,
+          "incorrect": 1,
+          "total": 20
+        },
+        "important": {
+          "correct": 14,
+          "refusal": 0,
+          "incorrect": 1,
+          "total": 15
+        },
+        "incidental": {
+          "correct": 5,
+          "refusal": 0,
+          "incorrect": 0,
+          "total": 5
+        }
+      }
+    },
+    "B": {
+      "tokens": 1758,
+      "chars": 6154,
+      "answers": {
+        "1": "Иван",
+        "2": "Backend developer",
+        "3": "Python",
+        "4": "ORM, Alembic",
+        "5": "Release MVP in two months",
+        "6": "SQLite",
+        "7": "Docker + Fly.io",
+        "8": "Cookie-based auth with password hash in env variable",
+        "9": "CSV export postponed to post-MVP",
+        "10": "python:3.12-slim base image",
+        "11": "Define data model, design table schema, consider subcategories",
+        "12": "Set up CI via GitHub Actions — tests on every push",
+        "13": "Implement cookie-based auth middleware decorator, add login endpoint",
+        "14": "Plan UI/UX",
+        "15": "Add index on expenses.date and composite index on (category_id, date)",
+        "16": "не знаю",
+        "17": "не знаю",
+        "18": "не знаю",
+        "19": "не знаю",
+        "20": "Модели самолётов"
+      },
+      "verdicts": {
+        "1": "correct",
+        "2": "correct",
+        "3": "correct",
+        "4": "correct",
+        "5": "correct",
+        "6": "correct",
+        "7": "correct",
+        "8": "correct",
+        "9": "correct",
+        "10": "correct",
+        "11": "correct",
+        "12": "correct",
+        "13": "correct",
+        "14": "incorrect",
+        "15": "correct",
+        "16": "refusal",
+        "17": "refusal",
+        "18": "refusal",
+        "19": "refusal",
+        "20": "correct"
+      },
+      "summary": {
+        "all": {
+          "correct": 15,
+          "refusal": 4,
+          "incorrect": 1,
+          "total": 20
+        },
+        "important": {
+          "correct": 14,
+          "refusal": 0,
+          "incorrect": 1,
+          "total": 15
+        },
+        "incidental": {
+          "correct": 1,
+          "refusal": 4,
+          "incorrect": 0,
+          "total": 5
+        }
+      }
+    },
+    "C": {
+      "tokens": 2180,
+      "chars": 7630,
+      "answers": {
+        "1": "Иван",
+        "2": "backend developer",
+        "3": "Python",
+        "4": "ORM, Alembic",
+        "5": "Release MVP in two months",
+        "6": "SQLite",
+        "7": "Docker + Fly.io",
+        "8": "Single user, password hash in env var, cookie-based auth middleware",
+        "9": "CSV export postponed to post-MVP (second wave)",
+        "10": "python:3.12-slim base image",
+        "11": "Define data model, Design table schema: amounts, currencies, dates, Consider subcategories for future evolution",
+        "12": "Set up CI via GitHub Actions — tests on every push",
+        "13": "Implement cookie-based auth middleware decorator, Add login endpoint with password hash verification",
+        "14": "UI themes: CSS variables with token system for light/dark themes, Basic meta tags and favicon needed for browser tabs",
+        "15": "Добавить индексы по дате в expenses",
+        "16": "не знаю",
+        "17": "не знаю",
+        "18": "не знаю",
+        "19": "не знаю",
+        "20": "модели самолётов"
+      },
+      "verdicts": {
+        "1": "correct",
+        "2": "correct",
+        "3": "correct",
+        "4": "correct",
+        "5": "correct",
+        "6": "correct",
+        "7": "correct",
+        "8": "correct",
+        "9": "correct",
+        "10": "correct",
+        "11": "correct",
+        "12": "correct",
+        "13": "correct",
+        "14": "correct",
+        "15": "correct",
+        "16": "refusal",
+        "17": "refusal",
+        "18": "refusal",
+        "19": "refusal",
+        "20": "correct"
+      },
+      "summary": {
+        "all": {
+          "correct": 16,
+          "refusal": 4,
+          "incorrect": 0,
+          "total": 20
+        },
+        "important": {
+          "correct": 15,
+          "refusal": 0,
+          "incorrect": 0,
+          "total": 15
+        },
+        "incidental": {
+          "correct": 1,
+          "refusal": 4,
+          "incorrect": 0,
+          "total": 5
+        }
+      }
+    }
+  }
+}

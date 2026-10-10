@@ -1,0 +1,33 @@
+{"ts": 1791594064.2649338, "role": "user", "text": "Привет! Хочу начать проект — личный трекер расходов. Поможешь спланировать?", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.265177, "role": "user", "text": "Пока ничего нет, только идея. Хочу простой веб-трекер для одного человека.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.2759411, "role": "user", "text": "Думаю про структуру: расходы, категории, даты. Что посоветуешь?", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.286964, "role": "user", "text": "Ок, тогда коннектор через стандартную библиотеку sqlite3.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.287128, "role": "user", "text": "Что по деньгам? Проект будет абсолютно бесплатным для меня?", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.298041, "role": "user", "text": "Валюту пока одну — рубль, но поле оставлю на будущее.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.2981849, "role": "user", "text": "Слушай, отвлекусь: у меня дома живёт кот Персик — вечно спит на клавиатуре.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.308439, "role": "user", "text": "Согласен. Вернёмся к схеме: индексы по дате сразу заложить?", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.308545, "role": "user", "text": "Ок. Ещё подумаю про подкатегории, но позже.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.320074, "role": "user", "text": "Да, CRUD я делал много раз. Интересна именно память проекта — как не потерять контекст.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.3202, "role": "user", "text": "Ладно. Тогда зафиксируй: API будет JSON по /api/expenses.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.333438, "role": "user", "text": "Угу. А база в volume, чтобы переживала пересборку.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.344043, "role": "user", "text": "План принят. Пока без деплоя — сначала локально стабильно.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.344457, "role": "user", "text": "Что по тестам? Хочу покрыть хотя бы операции с тратами.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.355411, "role": "user", "text": "Вчера досмотрел сериал про космос — затянуло, до трёх ночи смотрел.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.355529, "role": "user", "text": "Обещаю :) Вернёмся к отчётам: хочу график по месяцам.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.367488, "role": "user", "text": "Ещё думаю про CLI-версию как бонус.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.3676229, "role": "user", "text": "Ок. Куда положить бизнес-логику, чтобы CLI и веб её пересекли?", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.377274, "role": "user", "text": "А конфиги через переменные окружения — DATABASE_PATH и SECRET_KEY.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.377515, "role": "user", "text": "Точно. Ещё хочу healthcheck endpoint для Fly.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.38685, "role": "user", "text": "Да, роли не нужны — пользователь один. Как хранить пароль?", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.396584, "role": "user", "text": "Кстати, пробовал на днях кофе из Эфиопии — очень необычный вкус, ягодный.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.39669, "role": "user", "text": "Вернёмся к делу. Как выпускать обновления без простоев?", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.396916, "role": "user", "text": "Ок, без оверинжиниринга. Что с бэкапами?", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.4060218, "role": "user", "text": "И миграции руками, простыми SQL-файлами, без Alembic.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.416857, "role": "user", "text": "Пароль себе сохраню в менеджере паролей, не в коде.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.416964, "role": "user", "text": "Ещё вопрос: логирование? Хочу понять, если что-то падает.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.4267788, "role": "user", "text": "Ок, сделаю как систему токенов сразу.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.4363751, "role": "user", "text": "Пока темы хватит. Что по мелочам: favicon, метатеги?", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.4364989, "role": "user", "text": "Кстати, купил механическую клавиатуру — печатать стало заметно приятнее.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.446453, "role": "user", "text": "Договорились. Ещё хочу документацию: README и схему базы.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.455464, "role": "user", "text": "Ок. Как назовём проект? Пусть будет «Копилка».", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791594064.455573, "role": "user", "text": "Ещё бы импорт из банковских выписок, но это мечты.", "reason": "not_used_by_compression", "indexed": true}

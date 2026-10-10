@@ -1,0 +1,3 @@
+{"id": 1, "ts": 1791601078.220715, "kind": "like", "text": "custom categories", "status": "pending"}
+{"id": 2, "ts": 1791601128.872073, "kind": "like", "text": "auto-save (inferred from cat on keyboard)", "status": "pending"}
+{"id": 3, "ts": 1791601483.165866, "kind": "task", "text": "User wants to finalize MVP release - unclear if this means cutting scope or completing all open items", "status": "pending"}

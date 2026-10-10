@@ -1,0 +1,12 @@
+node_modules
+dist
+.demo/.opencode
+__pycache__
+*.pyc
+*.tgz
+
+.opencode/
+.living-memory/
+.venv/
+tests/python/prototype/sandbox/
+tests/python/prototype/memory/

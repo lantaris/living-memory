@@ -1,0 +1,5 @@
+{"ts": 1791606852.851934, "role": "user", "text": "Продолжаем трекер расходов. Сначала добавлю категории по умолчанию.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791606852.852073, "role": "user", "text": "Кстати, у меня дома живёт кот Персик — вечно спит на клавиатуре.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791606852.852289, "role": "user", "text": "Согласен, отдельная таблица categories. Ещё подумаю про экспорт в CSV.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791606852.863851, "role": "user", "text": "Ок. Ещё надо решить, где хранить иконки категорий.", "reason": "not_used_by_compression", "indexed": true}
+{"ts": 1791606852.863982, "role": "user", "text": "Пусть так. Позже проверю вёрстку на телефоне.", "reason": "not_used_by_compression", "indexed": true}
