@@ -1,9 +1,9 @@
 # living-memory
 
-> **Статус:** продукт переезжает на имя `living-memory`; в npm пока не опубликован
-> (`opencode-memory` там занят чужим пакетом), установка — из репозитория или
-> локального пути. Планируется адаптер для Hermes (MemoryProvider) поверх того же
-> движка.
+> **Статус:** 1.0.0. Работает в OpenCode и Hermes поверх одного движка и общего
+> каталога проекта `.living-memory/`. В npm пока не опубликован (`opencode-memory`
+> занят чужим пакетом; публичный репозиторий — по решению владельца), установка —
+> из каталога проекта.
 
 Layered living memory for [OpenCode](https://opencode.ai) agents: instead of
 replaying the whole history, the agent keeps a compressed model of the user and
@@ -157,6 +157,9 @@ status|search|pending`.
   (например, `deepseek/deepseek-flash`); по умолчанию — модель OpenCode по умолчанию.
 
 ## Данные на диске
+
+Каталог `.living-memory/` — общий для OpenCode и Hermes (сценарий «одна память
+на проект»); добавьте его в `.gitignore` проекта.
 
 ```
 <dataDir>/

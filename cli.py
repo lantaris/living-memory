@@ -12,11 +12,33 @@ from pathlib import Path
 _ENGINE_CLI = Path(__file__).resolve().parent / "python" / "cli.py"
 
 
+def _load_plugin_config() -> dict:
+    try:
+        from hermes_cli.config import cfg_get, load_config_readonly  # type: ignore
+
+        return cfg_get(load_config_readonly(), "plugins", "living-memory", default={}) or {}
+    except Exception:
+        return {}
+
+
+def _find_project_root(start: Path) -> Path:
+    current = start
+    for _ in range(30):
+        if (current / ".git").exists() or (current / ".living-memory").exists():
+            return current
+        parent = current.parent
+        if parent == current:
+            break
+        current = parent
+    return start
+
+
 def _data_dir() -> Path:
-    """Same resolution as the provider: workspace/.living-memory, else HERMES_HOME."""
-    workspace = Path.cwd()
-    hermes_home = os.environ.get("HERMES_HOME") or str(Path.home() / ".hermes")
-    return workspace / ".living-memory" if workspace.is_dir() else Path(hermes_home) / "living-memory"
+    """Same resolution as the provider: explicit option, else project root from cwd."""
+    explicit = str((_load_plugin_config() or {}).get("data_dir") or "").strip()
+    if explicit:
+        return Path(explicit).expanduser().resolve()
+    return _find_project_root(Path.cwd()) / ".living-memory"
 
 
 def _engine(args: list, stdin: str | None = None) -> dict | None:

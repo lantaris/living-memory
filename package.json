@@ -1,6 +1,6 @@
 {
   "name": "living-memory",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "Layered living memory for coding agents: OpenCode plugin + Hermes memory provider over one bundled Python engine. Per-session tails, LLM compression, loss log, pending queue and a search tool.",
   "type": "module",
   "main": "dist/src/index.js",

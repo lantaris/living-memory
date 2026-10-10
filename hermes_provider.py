@@ -43,6 +43,46 @@ _RECENT_LIMIT = 10  # engine default; compression triggers when the tail is full
 _JSON_FENCE_RE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL)
 
 
+def _load_plugin_config() -> dict:
+    """Options from ``$HERMES_HOME/config.yaml`` under ``plugins.living-memory``."""
+    try:
+        from hermes_cli.config import cfg_get, load_config_readonly  # type: ignore
+
+        return cfg_get(load_config_readonly(), "plugins", "living-memory", default={}) or {}
+    except Exception:
+        return {}
+
+
+def _find_project_root(start: Path) -> Path:
+    """Walk up from *start* to the project root (a ``.git`` or an existing store)."""
+    current = start
+    for _ in range(30):
+        if (current / ".git").exists() or (current / ".living-memory").exists():
+            return current
+        parent = current.parent
+        if parent == current:
+            break
+        current = parent
+    return start
+
+
+def resolve_data_dir(kwargs: Optional[dict] = None) -> Path:
+    """Shared-store resolution (design D2).
+
+    Explicit ``plugins.living-memory.data_dir`` wins; otherwise the store lives at
+    ``<project root>/.living-memory`` where the root is found by walking up from the
+    session cwd (or the process cwd). ``agent_workspace`` is deliberately ignored:
+    it is an agent NAME ("hermes"), not a path.
+    """
+    kwargs = kwargs or {}
+    explicit = str((_load_plugin_config() or {}).get("data_dir") or "").strip()
+    if explicit:
+        return Path(explicit).expanduser().resolve()
+    base = kwargs.get("cwd")
+    start = Path(str(base)).expanduser().resolve() if base else Path.cwd()
+    return _find_project_root(start) / ".living-memory"
+
+
 def wrap_stored_memory(block: str) -> str:
     """Wrap an injected memory block in the safety markers (see SKILL.md)."""
     return f"{MEMORY_BEGIN}\n{block}\n{MEMORY_END}"
@@ -157,15 +197,7 @@ class LivingMemoryProvider(MemoryProvider):
     def initialize(self, session_id: str, **kwargs) -> None:
         self._session_id = session_id or ""
         self._agent_context = str(kwargs.get("agent_context") or "primary")
-        hermes_home = kwargs.get("hermes_home")
-        workspace = kwargs.get("cwd") or kwargs.get("agent_workspace")
-        if workspace:
-            try:
-                data_dir = Path(str(workspace)).expanduser().resolve() / ".living-memory"
-            except Exception:
-                data_dir = Path(str(workspace)) / ".living-memory"
-        else:
-            data_dir = Path(str(hermes_home or Path.home() / ".hermes")) / "living-memory"
+        data_dir = resolve_data_dir(kwargs)
         self._data_dir = data_dir
         self._log(
             f"ready: session={session_id} context={self._agent_context} data={data_dir}"
