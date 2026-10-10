@@ -100,6 +100,31 @@ git clone <репозиторий> && cd living-memory && npm install && npm run
 
 Перезапустите OpenCode после изменения конфига.
 
+## Установка (Hermes)
+
+Hermes-интеграция — это MemoryProvider-плагин поверх того же движка. Оба
+агента работают с одним и тем же каталогом памяти проекта
+(`<проект>/.living-memory/`), отдельной установки движка не требуется.
+
+```bash
+# 1. положить репозиторий в домашний каталог Hermes как плагин
+git clone <репозиторий> "$HERMES_HOME/plugins/living-memory"
+#    (пока репозиторий не опубликован — просто скопируйте каталог проекта)
+
+# 2. включить провайдер в $HERMES_HOME/config.yaml:
+#    memory:
+#      provider: living-memory
+
+# 3. проверить
+hermes plugins doctor "$HERMES_HOME/plugins/living-memory" --ci
+hermes memory status          # Provider: living-memory, available
+```
+
+Сжатие памяти в Hermes выполняется **вашей моделью Hermes** (`ctx.llm`) —
+отдельные ключи и CLI не нужны. Если модель недоступна, память продолжает
+работать в режиме «хвост + поиск». Команды: `hermes living-memory
+status|search|pending`.
+
 ## Как работает
 
 - `session.created` — регистрация сессии, память готова;
