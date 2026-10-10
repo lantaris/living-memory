@@ -235,7 +235,8 @@ Windows проверен на стенде (node 16/16, python 20/20), живо�
 ```bash
 npm install
 npm run build
-npm test
+npm test                       # node-мост (16 тестов)
+./.venv/Scripts/python -m pytest tests/python -q   # ядро (24 теста; на Linux/macOS — python -m pytest)
 ```
 
 Структура: `src/` — TypeScript (config, bridge, hooks, tools, skill, index);
