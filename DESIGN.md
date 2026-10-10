@@ -46,6 +46,7 @@
 | Прототип в репо (долив 2026-10-10) | `experements/memory-prototype/` — 6.7k строк, 7 тестовых скриптов, SPECIFICATION + NOTES (§1–§14); `store.py` идентичен пакетному `python/store.py` (diff пуст) |
 | Прототипные тесты на стенде (заглушка `fcntl`, python 3.14, mock) | scenario 24/24 ✅, session ✅, loss_conflict ✅, model_swap-A ✅, normalization unit ✅; **multi_session: 3 падения — гонка `os.replace` → `WinError 5` (баг движка на Windows, не теста)** |
 | Retention-эксперимент (NOTES §9–§10) | Протоколирован: после нормализации конспект = **67%** стоимости истории, паритет на важных фактах (14.0/15), честные отказы «не знаю»; прогоны — mac + nemotron-3-ultra; у нас воспроизводима mock-часть |
+| Стенд после M1 (2026-10-10) | `npm test` **14/14**, `pytest` **8/8**, гонка двух процессов **0/20 сбоев**; движок — только stdlib |
 
 ## 2. Что реально дают хост-платформы (только подтверждённое)
 
@@ -64,17 +65,15 @@
 
 ## 3. Решения (гейты — закрыть до кода, рекомендация первой)
 
-- **D1. Имя и канал установки.** Пакет и репо → **`living-memory`** (npm свободно, GitHub `lantaris/living-memory` свободно; старое имя `opencode-memory` не трогать — занято чужим пакетом). Переименование существующего репо (`gh repo rename`) сохранит GitHub-редиректы; либо новый репо — решает владелец. Публикация в npm — **только после создания npm-аккаунта и логина** (сейчас нет; без него живём на git-install). Запасной вариант имени: `@lantaris/living-memory`.
-- **D2. Где живёт память по умолчанию.** Рекомендация: **общий проектный каталог** `<корень проекта>/.living-memory/` (корень — `git rev-parse --show-toplevel`, иначе каталог запуска; в `.gitignore`). Тогда один проект = одна память для обоих агентов (флагманский сценарий). Альтернатива: раздельные хранилища (проект у OpenCode, профиль Hermes) — только если владелец не хочет смешивать.
-- **D3. Каталог плагинов Hermes.** Рекомендация: сначала локальный drop-in (`$HERMES_HOME/plugins/living-memory/`), заявка в официальный `plugin-catalog` (PR с пином SHA) — опционально после 1.0.
-- **D4. Объём 1.0.** Рекомендация: M0–M5 без MCP-сервера; MCP — после 1.0 (M6).
-- **D5. Язык README.** Рекомендация: русский (как сейчас) + короткий английский блок Installation (пакет публичный).
+- **D1. Имя и канал установки — закрыто (2026-10-10).** Пакет переименован локально: `living-memory` 0.3.0 (пакет, скилл, пути, префиксы логов). GitHub владелец решил пока не трогать — работаем локально, репо отдельной командой позже. Публикация npm — позже; релиз 1.0 живёт на git-install. Запасной вариант имени: `@lantaris/living-memory`.
+- **D2. Где живёт память — закрыто (2026-10-10).** Общий проектный каталог `<проект>/.living-memory/`; в OpenCode-адаптере это default `dataDir` (сделано), Hermes-сторона — в M4 по тому же правилу.
+- **D3–D5 — приняты по рекомендации (2026-10-10, владелец не возражал):** каталог плагинов Hermes — локальный drop-in сейчас, заявка в официальный каталог после 1.0; 1.0 без MCP; README — русский + короткий английский блок Installation.
 
 ## 4. Правила исполнения (non-negotiables)
 
 - **Единственный источник требований — наши документы.** Файлы репозитория `opencode-memory` (включая `experements/`) — материал анализа, а не правила и не ограничения; самоограничения прототипа (без внешних зависимостей, «не усложнять», общий кап задач, отсутствие FTS) для релиза не действуют — берём лучшее с обоснованием.
 - **Не патчить чужое ядро.** Hermes — только `ctx`/ABC/хуки (политика «Plugins never touch core», `plugins/AGENTS.md`); OpenCode — только публичные хуки; никаких правок чужих деревьев.
-- **Не ставить пакеты в Hermes venv через pip.** Зависимости движка декларировать в `plugin.yaml → python_dependencies` (единственная новая: `filelock>=3.13,<5`); у OpenCode — максимум `@opencode-ai/plugin` (dev).
+- **Не ставить пакеты в Hermes venv через pip.** Движок — только stdlib: решено при исполнении 2026-10-10 делать SQLite-мьютекс вместо `filelock` (внешних зависимостей у движка нет вовсе). У OpenCode-адаптера — максимум `@opencode-ai/plugin` (dev).
 - **Ничего не публиковать и не пушить без отдельной команды владельца** (npm publish, git push, создание репо — отдельные гейты).
 - **Чужой пакет `opencode-memory` (tomako/shuans) не трогать** — не занимать имя, не «помогать», не ссылаться как на нашу версию.
 - **Windows — обязательный таргет с первого коммита** (сегодня там 6/13 падений; CI-матрица ubuntu+windows+macos).
@@ -97,6 +96,7 @@
 
 **Приёмка:** CI зелёный на 3 ОС × 2 версиях python на текущем коде (кроме заведомо красного Windows-движка — он чинится в M1; до M1 допустимо оставить `continue-on-error` для windows-джобы pytest с явной пометкой).
 **Evidence:** ссылка на CI-run; `npm pack --dry-run` (состав пакета); `gh repo view`.
+**Итог (2026-10-10, локально):** переименование (`living-memory` 0.3.0 — пакет, скилл, пути, префиксы), архив нейтрализован (`MANIFEST.author.md` + шапка), CI-файл создан, README-установка поправлена (npm-имя занято → локальный путь / git). Коммит `9df86c9` в `D:\WRK\living-memory`. GitHub-часть (репо, push, зелёная матрица) — ждёт команды владельца.
 
 ### M0b — Probe-этап: измерить неизвестные до архитектуры адаптеров
 
@@ -116,17 +116,18 @@
 
 **Цель:** движок работает на Windows/Linux/macOS без «особых случаев», покрыт тестами.
 **Шаги:**
-1. `python/store.py`: убрать `fcntl` → `filelock`; один лок на data-dir (`.lock`) на **все** мутации (json + sqlite), не только recent — закрывает и гонку `append_pending`.
+1. `python/store.py`: `fcntl` → SQLite-мьютекс (`BEGIN IMMEDIATE` + `busy_timeout 10s`); один писатель на data-dir; `PRAGMA journal_mode=WAL` — однократное переключение с ретраями (`_ensure_wal`: прагма не чтит busy handler, гонка ловится). От `filelock` отказались при исполнении — движку внешние зависимости не нужны.
 2. Транспорт: `python/cli.py append --stdin` и `append --batch` (JSONL на stdin) — мост и хуки перестают класть содержимое в argv (лимит 128 KB/арг на Linux, ~32 KB на Windows).
 3. UTF-8: `PYTHONUTF8=1` в env дочернего процесса (`src/bridge.ts`), `encoding="utf-8"` в `subprocess` (`python/llm.py`), тест с русским текстом на Windows-CI.
 4. Поиск интерпретатора (`src/config.ts`): `options.pythonBin` → `MEMORY_PLUGIN_PYTHON` → `python3` → `python` → `py -3` (кандидат проверяется дешёвым `-c "import sys; print(sys.version_info[:2])"`), кэш на процесс, внятная ошибка «Python 3.10+ не найден, установите или задайте MEMORY_PLUGIN_PYTHON».
 5. pytest (`tests/python/`): store (два параллельных процесса × 50 append — без потерь и дублей), normalize (лимиты, дедуп тем, капы), compress (id-удаление из хвоста, loss-запись), inject (структура промпта), cli (batch/stdin/private).
 6. Синк на `session.idle`: один вызов `append --batch` на N сообщений вместо N процессов (замер до/после).
-7. `_atomic_write`: на Windows `os.replace` транзиентно падает (`WinError 5`, файл занят читателем/писателем) — воспроизведено в `test_multi_session` (3 из 24 падений); добавить retry-loop на `PermissionError` поверх filelock.
+7. `_atomic_write`: на Windows `os.replace` транзиентно падает (`WinError 5`, файл занят читателем/писателем) — retry-loop на `PermissionError` добавлен.
 8. Портировать прототипные тесты (`experements/memory-prototype/test_*.py` — plain-assert, без unittest) в `tests/python/` под pytest: scenario (24), session, loss_conflict, model_swap (A), normalization (unit), multi_session (24) — регресс-оракул; retention — отдельно (нужна LLM).
 
 **Приёмка:** `npm test` и `pytest` зелёные на всех 3 ОС; стресс-тест конкуренции не теряет сообщений.
 **Evidence:** CI-вывод; вывод стресс-теста; замер времени синка.
+**Итог (2026-10-10, Windows-стенд):** `npm test` **14/14**; `pytest` **8/8** (6 прогонов прототипа + конкурентность двух процессов и stdin-транспорт); гонка 2×20 записей — 9/20 сбоев → **0/20** после фикса WAL. Коммит `3c8aa34`.
 
 ### M2 — Дозавершение функциональности ядра
 
@@ -216,23 +217,21 @@
 ## 8. Структура репо (к созданию)
 
 ```
-living-memory/                 (корень репо = корень Hermes-плагина)
-├── README.md                  (RU + EN Installation)
-├── LICENSE                    (MIT — оставить)
-├── CHANGELOG.md
-├── package.json / tsconfig.json
-├── plugin.yaml                (Hermes: name living-memory, python_dependencies: filelock>=3.13,<5)
-├── __init__.py                (Hermes: register(ctx) → MemoryProvider; скиллы)
-├── cli.py                     (hermes living-memory status|search|pending|compact)
-├── config_schema.py           (панель настроек в Desktop)
-├── src/                       (OpenCode TS-мост: index/config/bridge/hooks/tools/skill)
-├── python/                    (движок: store/compress/normalize/inject/llm/cli)
+living-memory/                          (корень репо = корень Hermes-плагина)
+├── PLAN.md / DESIGN.md / HANDOFF.md    (документы проекта)
+├── README.md                           (RU + EN Installation)
+├── LICENSE                             (MIT)
+├── package.json / tsconfig.json        (0.3.0, engines.node >=22)
+├── src/                                (OpenCode TS-мост: config/bridge/hooks/tools/skill/index)
+├── python/                             (движок: store/compress/normalize/inject/llm/cli; только stdlib)
 ├── skills/living-memory/SKILL.md
-├── tests/                     (node --test: bridge/hooks/tools)
-├── tests/python/              (pytest: store/compress/normalize/inject/cli)
-├── .github/workflows/ci.yml   (3 ОС × python 3.10/3.13)
-├── .demo/                     (демо-проект для opencode)
-└── experements/               (архив прототипа: НЕ трогать — источник тестов и протоколов)
+├── tests/                              (node --test, 14 шт.)
+├── tests/python/                       (pytest: prototype/ (6 прогонов) + locking/transport; retention — вручную)
+├── .github/workflows/ci.yml            (3 ОС × python 3.10/3.13; включится с GitHub)
+├── .demo/                              (демо-проект для opencode)
+├── experements/                        (архив прототипа; MANIFEST.author.md — исторический документ)
+├── plugin.yaml / __init__.py / cli.py / config_schema.py   (Hermes — появится в M4)
+└── CHANGELOG.md                        (появится в M5)
 ```
 
 ## 9. Формат отчёта исполнителя
