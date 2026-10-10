@@ -1,9 +1,8 @@
 # living-memory
 
 > **Статус:** 1.0.0. Работает в OpenCode и Hermes поверх одного движка и общего
-> каталога проекта `.living-memory/`. В npm пока не опубликован (`opencode-memory`
-> занят чужим пакетом; публичный репозиторий — по решению владельца), установка —
-> из каталога проекта.
+> каталога проекта `.living-memory/`. Репозиторий — `github.com/lantaris/living-memory`;
+> в npm пока не опубликован (`opencode-memory` там занят чужим пакетом).
 
 Layered living memory for [OpenCode](https://opencode.ai) agents: instead of
 replaying the whole history, the agent keeps a compressed model of the user and
@@ -62,14 +61,15 @@ Subagent-сессии в память не пишутся. Старые данн
   `MEMORY_PLUGIN_PYTHON`;
 - Node.js 22+.
 
-Пакет пока **не опубликован** в npm — установка из репозитория или локального пути:
+Пакет пока **не опубликован** в npm — установка из git-репозитория:
 
 ```bash
-# локальный клон
-git clone <репозиторий> && cd living-memory && npm install && npm run build
+# вариант 1: установить прямо из GitHub (собирается на install)
+npm install github:lantaris/living-memory
 
-# из git — когда появится публичный репозиторий living-memory
-# (сейчас он не создан — используйте локальный клон выше)
+# вариант 2: локальный клон
+git clone https://github.com/lantaris/living-memory.git
+cd living-memory && npm install && npm run build
 ```
 
 Подключение в `opencode.json` (проект или глобальный):
@@ -108,8 +108,7 @@ Hermes-интеграция — это MemoryProvider-плагин поверх 
 
 ```bash
 # 1. положить репозиторий в домашний каталог Hermes как плагин
-git clone <репозиторий> "$HERMES_HOME/plugins/living-memory"
-#    (пока репозиторий не опубликован — просто скопируйте каталог проекта)
+git clone https://github.com/lantaris/living-memory.git "$HERMES_HOME/plugins/living-memory"
 
 # 2. включить провайдер в $HERMES_HOME/config.yaml:
 #    memory:
