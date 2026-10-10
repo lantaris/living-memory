@@ -2,4 +2,4 @@
 
 Файл `opencode.json` подключает собранный плагин из `../dist/src/index.js`.
 Запуск: `opencode run "..."` из этого каталога. Лог и память пишутся в
-`.opencode/opencode-memory/`.
+`.living-memory/`.

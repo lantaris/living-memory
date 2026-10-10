@@ -5,11 +5,11 @@
 детали этапов с приёмкой и Evidence, критерии приёмки v1.0, риски, структура будущего репо, формат отчёта.
 Результаты замеров (probe-этап и прочие) дописываются сюда.
 
-**Статус:** только план. Код не трогался, ничего не собиралось, не публиковалось, репозитории не создавались.
+**Статус (2026-10-10):** в работе — M0 и M1 выполнены (см. PLAN.md и HANDOFF.md); ниже контекст, решения и приёмка. Ничего не пушилось и не публиковалось.
 **Дата:** 2026-10-10. **Владелец решений:** Эд. **Исполнитель:** любой coding-агент.
 
-**Цель:** превратить прототип `opencode-memory` v0.2.0 (аудит-клон: `D:\WRK\opencode-memory`, HEAD c9c35e2, чистый) в продукт **living-memory**: один Python-движок слоистой памяти (core / задачи / хвост / индекс / журнал потерь / очередь «на подтверждение») + два адаптера — TS-плагин для OpenCode и MemoryProvider-плагин для Hermes. Общий движок, общий формат данных, опционально общий каталог памяти проекта.
-**Платформы:** Windows — первая (там стенд и там сейчас всё сломано), Linux/macOS — с первого дня в CI-матрице.
+**Цель:** превратить прототип `opencode-memory` v0.2.0 (аудит-клон: `D:\WRK\opencode-memory`, HEAD 7e31288, чистый) в продукт **living-memory**: один Python-движок слоистой памяти (core / задачи / хвост / индекс / журнал потерь / очередь «на подтверждение») + два адаптера — TS-плагин для OpenCode и MemoryProvider-плагин для Hermes. Общий движок, общий формат данных, опционально общий каталог памяти проекта.
+**Платформы:** Windows — первая (стенд; после M1 движок там работает), Linux/macOS — с первого дня в CI-матрице.
 **Уровень:** релизный продукт — тесты, CI, документация, changelog; польза в реальной работе с агентами (OpenCode и Hermes) важнее минимализма прототипа.
 
 Перед работой прочитать (контракты — истина, не память):
@@ -20,7 +20,7 @@
 - `https://opencode.ai/docs/plugins/` и `https://opencode.ai/docs/skills/` — хуки/скиллы OpenCode.
 - Типы `@opencode-ai/plugin@1.18.35` (получены `npm pack`; `dist/index.d.ts`, строки 173–304) — фактический список хуков.
 
-**Важно:** файлы репозитория `opencode-memory` — включая `experements/memory-prototype/AGENTS.md` (манифест Автора), `NOTES.md`, `SPECIFICATION.md` — это **только материал анализа** («что было сделано»), а не правила и не ограничения для living-memory. Требования к продукту задают `PLAN.md` и этот документ.
+**Важно:** файлы репозитория `opencode-memory` — включая `experements/memory-prototype/MANIFEST.author.md` (бывший `AGENTS.md`, манифест Автора), `NOTES.md`, `SPECIFICATION.md` — это **только материал анализа** («что было сделано»), а не правила и не ограничения для living-memory. Требования к продукту задают `PLAN.md` и этот документ.
 
 ---
 
@@ -28,7 +28,7 @@
 
 | Факт | Состояние |
 |---|---|
-| Аудит-клон исходника | `D:\WRK\opencode-memory`, чистый, 5 коммитов, MIT |
+| Аудит-клон исходника | `D:\WRK\opencode-memory`, чистый, 6 коммитов (HEAD 7e31288), MIT |
 | Тесты «как есть» на Windows | **7/13** (`node --test`, 6 падений — нет `python3`) |
 | Тесты с тестовой заглушкой `fcntl` + python 3.14 | **13/13** — логика движка исправна, ломает платформа |
 | Движок на Windows «как есть» | `ModuleNotFoundError: No module named 'fcntl'` (`python/store.py:3`) |
@@ -43,7 +43,7 @@
 | `memory_search` как имя инструмента в Hermes | коллизий нет (grep по `tools/`, `agent/` пуст) |
 | filelock на PyPI | 4.1.0, MIT, py≥3.10, без зависимостей (кросс-платформенный файловый лок) |
 | portalocker на PyPI | 4.4.0, BSD-3 — альтернатива filelock, не нужна |
-| Прототип в репо (долив 2026-10-10) | `experements/memory-prototype/` — 6.7k строк, 7 тестовых скриптов, SPECIFICATION + NOTES (§1–§14); `store.py` идентичен пакетному `python/store.py` (diff пуст) |
+| Прототип в репо (долив 2026-10-10) | `experements/memory-prototype/` — 6.7k строк, 7 тестовых скриптов, SPECIFICATION + NOTES (§1–§14); `store.py` на момент долива был идентичен пакетному (после M1 движок переписан — SQLite-мьютекс; архив остаётся историческим снимком) |
 | Прототипные тесты на стенде (заглушка `fcntl`, python 3.14, mock) | scenario 24/24 ✅, session ✅, loss_conflict ✅, model_swap-A ✅, normalization unit ✅; **multi_session: 3 падения — гонка `os.replace` → `WinError 5` (баг движка на Windows, не теста)** |
 | Retention-эксперимент (NOTES §9–§10) | Протоколирован: после нормализации конспект = **67%** стоимости истории, паритет на важных фактах (14.0/15), честные отказы «не знаю»; прогоны — mac + nemotron-3-ultra; у нас воспроизводима mock-часть |
 | Стенд после M1 (2026-10-10) | `npm test` **14/14**, `pytest` **8/8**, гонка двух процессов **0/20 сбоев**; движок — только stdlib |
@@ -91,7 +91,7 @@
 1. Записать ответы владельца по D1–D5 в HANDOFF (раздел решений).
 2. `gh repo rename living-memory` (в каталоге репо; редиректы GitHub сохранятся) **или** новый репо — по решению D1.
 3. `package.json`: `name: "living-memory"`, `version: 0.3.0`, добавить `repository/author/homepage`, `engines.node >=22` (глоб в `node --test` документирован только с v21+ — на 18 команда `npm test` не работает), devDep `@opencode-ai/plugin ^1.18.35`.
-4. `.github/workflows/ci.yml`: matrix `os: [ubuntu-latest, windows-latest, macos-latest]`; шаги: `npm ci && npm test`; `python -m pip install filelock pytest && python -m pytest tests/python -q` (python 3.10 и 3.13).
+4. `.github/workflows/ci.yml`: matrix `os: [ubuntu-latest, windows-latest, macos-latest]`; шаги: `npm ci && npm test`; `python -m pip install pytest && python -m pytest tests/python -q` (python 3.10 и 3.13).
 5. README: новые инструкции (OpenCode: npm-плагин или локальный путь; Hermes: drop-in в `$HERMES_HOME/plugins/` + `memory.provider`), блок английской установки (D5).
 
 **Приёмка:** CI зелёный на 3 ОС × 2 версиях python на текущем коде (кроме заведомо красного Windows-движка — он чинится в M1; до M1 допустимо оставить `continue-on-error` для windows-джобы pytest с явной пометкой).
@@ -120,14 +120,14 @@
 2. Транспорт: `python/cli.py append --stdin` и `append --batch` (JSONL на stdin) — мост и хуки перестают класть содержимое в argv (лимит 128 KB/арг на Linux, ~32 KB на Windows).
 3. UTF-8: `PYTHONUTF8=1` в env дочернего процесса (`src/bridge.ts`), `encoding="utf-8"` в `subprocess` (`python/llm.py`), тест с русским текстом на Windows-CI.
 4. Поиск интерпретатора (`src/config.ts`): `options.pythonBin` → `MEMORY_PLUGIN_PYTHON` → `python3` → `python` → `py -3` (кандидат проверяется дешёвым `-c "import sys; print(sys.version_info[:2])"`), кэш на процесс, внятная ошибка «Python 3.10+ не найден, установите или задайте MEMORY_PLUGIN_PYTHON».
-5. pytest (`tests/python/`): store (два параллельных процесса × 50 append — без потерь и дублей), normalize (лимиты, дедуп тем, капы), compress (id-удаление из хвоста, loss-запись), inject (структура промпта), cli (batch/stdin/private).
+5. pytest (`tests/python/`): store (два параллельных процесса × 20 append — без потерь и дублей), normalize (лимиты, дедуп тем, капы), compress (id-удаление из хвоста, loss-запись), inject (структура промпта), cli (batch/stdin; `private` — в M2 вместе с решением).
 6. Синк на `session.idle`: один вызов `append --batch` на N сообщений вместо N процессов (замер до/после).
 7. `_atomic_write`: на Windows `os.replace` транзиентно падает (`WinError 5`, файл занят читателем/писателем) — retry-loop на `PermissionError` добавлен.
 8. Портировать прототипные тесты (`experements/memory-prototype/test_*.py` — plain-assert, без unittest) в `tests/python/` под pytest: scenario (24), session, loss_conflict, model_swap (A), normalization (unit), multi_session (24) — регресс-оракул; retention — отдельно (нужна LLM).
 
 **Приёмка:** `npm test` и `pytest` зелёные на всех 3 ОС; стресс-тест конкуренции не теряет сообщений.
 **Evidence:** CI-вывод; вывод стресс-теста; замер времени синка.
-**Итог (2026-10-10, Windows-стенд):** `npm test` **14/14**; `pytest` **8/8** (6 прогонов прототипа + конкурентность двух процессов и stdin-транспорт); гонка 2×20 записей — 9/20 сбоев → **0/20** после фикса WAL. Коммит `3c8aa34`.
+**Итог (2026-10-10, Windows-стенд):** `npm test` **14/14**; `pytest` **8/8** (6 прогонов прототипа + конкурентность двух процессов и stdin-транспорт); гонка 2×20 записей — 9/20 сбоев → **0/20** после фикса WAL. Замер синка (20 сообщений): одиночные append 3.64 s → один `--batch` 0.21 s (≈17×). Коммит `3c8aa34`.
 
 ### M2 — Дозавершение функциональности ядра
 
@@ -209,12 +209,12 @@
 | Windows-локаль/UTF-8 | «Кракозябры» или падение на русском | `PYTHONUTF8=1` + тест с русским в CI |
 | Оба агента пишут в один проект одновременно | Гонки файлов | Единый лок data-dir (M1); стресс-тест; честная запись в README |
 | npm-публикация недоступна (нет аккаунта) | «Инструкция не работает» | Гейт D1; git-install-путь в README как основной, пока нет аккаунта |
-| filelock добавляет зависимость | Отказ установки в экзотичных окружениях | MIT, zero-dep, py≥3.10; пин `>=3.13,<5`; альтернатива — portalocker (BSD) |
+| ~~filelock добавляет зависимость~~ (снято) | — | От `filelock` отказались при исполнении M1: SQLite-мьютекс, внешних зависимостей нет |
 | Будущие коллизии имён инструментов в Hermes | Регистрация провалится | `memory_search` проверен (коллизий нет); в плагине — check при загрузке + `hermes plugins doctor` |
 | Категоризация LLM нестабильна (слои смешиваются, uncertain дублируется; NOTES §8.4/§10.4) | конспект пухнет, reject не очищает | нормализация ловит формат; детект в loss_log; честное описание; модель сжатия — выбор владельца |
-| `os.replace` на Windows под конкуренцией (`WinError 5`) | тихие провалы записи при двух агентах | retry на `PermissionError` + единый filelock (M1); `multi_session` в CI |
+| `os.replace` на Windows под конкуренцией (`WinError 5`) | тихие провалы записи при двух агентах | retry на `PermissionError` + SQLite-мьютекс (M1); `multi_session` в CI |
 
-## 8. Структура репо (к созданию)
+## 8. Структура репо (фактическая, 2026-10-10)
 
 ```
 living-memory/                          (корень репо = корень Hermes-плагина)
