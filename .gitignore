@@ -10,3 +10,8 @@ __pycache__
 .venv/
 tests/python/prototype/sandbox/
 tests/python/prototype/memory/
+
+# agent working docs (local only)
+PLAN.md
+DESIGN.md
+HANDOFF.md
