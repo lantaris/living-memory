@@ -34,6 +34,17 @@ Raw messages from the full history index: role, timestamp, and text. They are
 not summarized. If a result contains the answer, use it. If not, say you don't
 know — do not guess.
 
+## Confirmation queue (`memory_pending`)
+
+Facts the compressor was unsure about land in a queue instead of being written
+silently. Use `memory_pending`:
+
+- `list` — show what the memory is unsure about (e.g. the user asks "what do you
+  remember?" or wants to review);
+- `approve <id>` — the user confirmed the fact; it is written into core memory;
+- `reject <id>` — the user says it is wrong; the record is marked rejected and
+  core memory stays unchanged.
+
 ## Limits
 
 - Details dropped by compression (transient facts, side remarks such as pets,
